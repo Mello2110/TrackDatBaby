@@ -9,7 +9,7 @@ import type { BabyProfile } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function DashboardPage() {
-  const { user, userData } = useAuth()
+  const { user, userData, refreshUserData } = useAuth()
   const router = useRouter()
   const { t } = useLanguage()
   const [babies, setBabies] = useState<BabyProfile[]>([])
@@ -41,6 +41,7 @@ export default function DashboardPage() {
     setInviteError('')
     try {
       const babyId = await redeemInviteCode(inviteCode.trim().toUpperCase(), user.uid)
+      await refreshUserData()
       router.push(`/baby/${babyId}`)
     } catch (err: any) {
       setInviteError(err.message)
