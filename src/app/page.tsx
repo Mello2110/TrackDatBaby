@@ -10,7 +10,7 @@ export default function HomePage() {
   useEffect(() => {
     if (loading) return
     if (!user) {
-      router.replace('/(auth)/login')
+      router.replace('/login')
       return
     }
     // Check if onboarding is done
