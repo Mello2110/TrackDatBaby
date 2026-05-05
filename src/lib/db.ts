@@ -43,7 +43,16 @@ export async function updateUserSettings(uid: string, settings: Partial<UserSett
 // ── BABY ──────────────────────────────────────────────────
 export async function getBaby(babyId: string) {
   const snap = await getDoc(doc(db, 'babies', babyId))
-  return snap.exists() ? { id: snap.id, ...snap.data() } as BabyProfile : null
+  if (!snap.exists()) return null
+  const data = snap.data()
+  
+  // Auto-migrate: Add caregiverIds if missing
+  if (!data.caregiverIds && data.caregivers) {
+    data.caregiverIds = data.caregivers.map((c: any) => c.userId)
+    await updateDoc(doc(db, 'babies', babyId), { caregiverIds: data.caregiverIds })
+  }
+  
+  return { id: snap.id, ...data } as BabyProfile
 }
 
 export async function getUserBabies(uid: string): Promise<BabyProfile[]> {
@@ -68,6 +77,7 @@ export async function createBaby(
       invitedBy: uid,
       addedAt: Timestamp.now(),
     }],
+    caregiverIds: [uid],
     createdAt: serverTimestamp(),
     createdBy: uid,
   })
@@ -150,6 +160,7 @@ export async function redeemInviteCode(
       invitedBy: data.createdBy,
       addedAt: Timestamp.now(),
     }),
+    caregiverIds: arrayUnion(currentUserId),
   })
   await updateDoc(doc(db, 'users', currentUserId), {
     linkedBabies: arrayUnion(data.babyId),

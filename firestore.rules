@@ -11,15 +11,21 @@ service cloud.firestore {
     }
 
     function isCaregiver(babyId) {
-      let caregivers = getCaregivers(babyId);
-      return isAuth() && caregivers.hasAny([{'userId': request.auth.uid}]);
+      let baby = get(/databases/$(database)/documents/babies/$(babyId)).data;
+      return isAuth() && (
+        request.auth.uid == baby.createdBy || 
+        (!('caregiverIds' in baby)) || 
+        (request.auth.uid in baby.caregiverIds)
+      );
     }
 
     function hasFullAccess(babyId) {
-      let caregivers = getCaregivers(babyId);
-      return isAuth() && caregivers.hasAny([
-        {'userId': request.auth.uid, 'accessLevel': 'full'}
-      ]);
+      let baby = get(/databases/$(database)/documents/babies/$(babyId)).data;
+      return isAuth() && (
+        request.auth.uid == baby.createdBy || 
+        (!('caregiverIds' in baby)) || 
+        (request.auth.uid in baby.caregiverIds)
+      );
     }
 
     // Users can only access their own document

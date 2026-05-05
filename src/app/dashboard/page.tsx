@@ -23,10 +23,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return
-    getUserBabies(user.uid).then((b) => {
-      setBabies(b)
-      setLoading(false)
-    })
+    getUserBabies(user.uid)
+      .then((b) => {
+        setBabies(b)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error("Failed to load babies:", err)
+        setLoading(false)
+      })
   }, [user])
 
   async function handleRedeemCode() {
