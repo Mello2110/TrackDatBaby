@@ -144,7 +144,7 @@ export default function LoginPage() {
 
       <div className="text-center mt-3">
         <span style={{ color: 'var(--text2)', fontSize: 13 }}>No account? </span>
-        <a href="/(auth)/register" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>
+        <a href="/register" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>
           Create one
         </a>
       </div>

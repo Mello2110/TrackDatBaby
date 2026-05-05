@@ -95,7 +95,7 @@ export default function RegisterPage() {
 
       <div className="text-center mt-3">
         <span style={{ color: 'var(--text2)', fontSize: 13 }}>Already have an account? </span>
-        <a href="/(auth)/login" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Sign in</a>
+        <a href="/login" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Sign in</a>
       </div>
     </div>
   )
