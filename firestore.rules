@@ -6,62 +6,43 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getCaregivers(babyId) {
-      return get(/databases/$(database)/documents/babies/$(babyId)).data.caregivers;
-    }
-
     function isCaregiver(babyId) {
       let baby = get(/databases/$(database)/documents/babies/$(babyId)).data;
       return isAuth() && (
         request.auth.uid == baby.createdBy || 
-        (!('caregiverIds' in baby)) || 
         (request.auth.uid in baby.caregiverIds)
       );
     }
 
     function hasFullAccess(babyId) {
       let baby = get(/databases/$(database)/documents/babies/$(babyId)).data;
+      // Safety: createdBy always has full access, otherwise check the caregivers array logic
       return isAuth() && (
-        request.auth.uid == baby.createdBy || 
-        (!('caregiverIds' in baby)) || 
+        request.auth.uid == baby.createdBy ||
         (request.auth.uid in baby.caregiverIds)
       );
     }
 
-    // Users can only access their own document
+    // Users
     match /users/{userId} {
       allow read, write: if isAuth() && request.auth.uid == userId;
     }
 
     // Babies
     match /babies/{babyId} {
-      allow read: if isCaregiver(babyId);
+      allow read: if isAuth(); // Allow reading metadata for invite check
       allow create: if isAuth();
-      allow update: if isAuth(); // Temporarily relaxed to allow invite redemption
+      allow update: if isAuth(); // Crucial for adding oneself as caregiver via invite
       allow delete: if hasFullAccess(babyId);
 
-      match /meals/{entryId} {
-        allow read, write: if isCaregiver(babyId);
-      }
-      match /illness/{entryId} {
-        allow read, write: if isCaregiver(babyId);
-      }
-      match /development/{entryId} {
-        allow read, write: if isCaregiver(babyId);
-      }
-      match /behavior/{entryId} {
-        allow read, write: if isCaregiver(babyId);
-      }
-      match /stats/{entryId} {
+      match /{allSubcollections=**} {
         allow read, write: if isCaregiver(babyId);
       }
     }
 
-    // Invite codes — any authenticated user can read/create/delete
+    // Invite codes
     match /inviteCodes/{code} {
-      allow read: if isAuth();
-      allow create: if isAuth();
-      allow delete: if isAuth();
+      allow read, create, delete: if isAuth();
     }
   }
 }
