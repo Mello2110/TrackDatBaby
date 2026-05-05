@@ -1,6 +1,6 @@
-'use client'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/LanguageContext'
+import { useAuth } from '@/lib/AuthContext'
 
 // ── TOPBAR ────────────────────────────────────────────────
 interface TopbarProps {
@@ -55,6 +55,10 @@ interface TabBarProps {
 export function TabBar({ active, babyId }: TabBarProps) {
   const router = useRouter()
   const { t } = useLanguage()
+  const { userData } = useAuth()
+  const firstBabyId = userData?.linkedBabies?.[0]
+  const targetBabyId = babyId || firstBabyId
+
   return (
     <div className="tab-bar">
       <div
@@ -71,7 +75,7 @@ export function TabBar({ active, babyId }: TabBarProps) {
       </div>
       <div
         className="flex-1 flex flex-col items-center gap-1 py-2 cursor-pointer"
-        onClick={() => babyId && router.push(`/baby/${babyId}`)}
+        onClick={() => targetBabyId ? router.push(`/baby/${targetBabyId}`) : router.push('/onboarding?step=baby')}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke={active === 'baby' ? 'var(--accent)' : 'var(--text3)'}

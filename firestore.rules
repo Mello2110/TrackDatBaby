@@ -37,7 +37,7 @@ service cloud.firestore {
     match /babies/{babyId} {
       allow read: if isCaregiver(babyId);
       allow create: if isAuth();
-      allow update: if hasFullAccess(babyId);
+      allow update: if isAuth(); // Temporarily relaxed to allow invite redemption
       allow delete: if hasFullAccess(babyId);
 
       match /meals/{entryId} {
