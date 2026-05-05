@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext'
 import { useTheme } from '@/lib/ThemeContext'
 import { updateUserSettings } from '@/lib/db'
 import { logOut } from '@/lib/auth'
+import { deleteUser } from 'firebase/auth'
 import { Topbar, TabBar, ToggleRow } from '@/components/ui'
 
 import { useLanguage } from '@/lib/LanguageContext'
@@ -16,6 +17,8 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { t } = useLanguage()
   const router = useRouter()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [error, setError] = useState('')
 
   const settings = userData?.settings || {}
   const [rememberMe, setRememberMe] = useState(settings.rememberMe ?? true)
@@ -43,6 +46,17 @@ export default function SettingsPage() {
   async function handleLogout() {
     await logOut()
     router.replace('/login')
+  }
+
+  async function handleDeleteAccount() {
+    if (!user) return
+    try {
+      await deleteUser(user)
+      router.replace('/login')
+    } catch (err: any) {
+      setError(err.message)
+      setShowDeleteConfirm(false)
+    }
   }
 
   return (
@@ -103,9 +117,34 @@ export default function SettingsPage() {
         <button className="btn-ghost mb-3 text-sm" style={{ color: 'var(--text2)' }} onClick={handleLogout}>
           {t('settings.signOut')}
         </button>
-        <button className="btn-outline text-sm" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
-          {t('settings.deleteAccount')}
-        </button>
+
+        {!showDeleteConfirm ? (
+          <button
+            className="btn-outline text-sm"
+            style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            {t('settings.deleteAccount')}
+          </button>
+        ) : (
+          <div className="rounded-[14px] p-4 mt-2" style={{ background: 'var(--rose-bg)', border: '2px solid var(--danger)' }}>
+            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--danger)' }}>{t('baby.parentProfile.areYouSure')}</p>
+            <p className="text-[13px] mb-4" style={{ color: 'var(--text2)' }}>
+              {t('baby.parentProfile.deleteWarning')}
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 py-[12px] rounded-[10px] text-[14px] font-semibold"
+                style={{ background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer' }}
+                onClick={handleDeleteAccount}
+              >
+                {t('baby.parentProfile.yesDelete')}
+              </button>
+              <button className="flex-1 btn-ghost" onClick={() => setShowDeleteConfirm(false)}>{t('common.cancel')}</button>
+            </div>
+          </div>
+        )}
+        {error && <p className="text-[12px] mt-2" style={{ color: 'var(--danger)' }}>{error}</p>}
       </div>
 
       <TabBar active="settings" />
