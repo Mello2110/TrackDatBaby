@@ -48,6 +48,7 @@ function OnboardingContent() {
   // Step 2 — Parent Profile
   const [parentName, setParentName] = useState('')
   const [parentDob, setParentDob] = useState('')
+  const [parentRole, setParentRole] = useState<string>('mother')
   const [bloodType, setBloodType] = useState('')
   const [familyDiseases, setFamilyDiseases] = useState('')
   const [personalDiseases, setPersonalDiseases] = useState('')
@@ -70,6 +71,7 @@ function OnboardingContent() {
       await updateUserProfile(user.uid, {
         name: parentName,
         dob: parentDob,
+        role: parentRole,
         bloodType,
         familyDiseases,
         personalDiseases,
@@ -200,6 +202,20 @@ function OnboardingContent() {
         <form onSubmit={handleParentSave}>
           <InputGroup label={t('onboarding.fullName')} value={parentName} onChange={setParentName} placeholder={t('onboarding.fullName')} required />
           <InputGroup label={t('onboarding.dob')} type="date" value={parentDob} onChange={setParentDob} />
+          <SelectGroup
+            label={t('baby.caregivers.role')}
+            value={parentRole}
+            onChange={setParentRole}
+            options={[
+              { value: 'mother', label: t('baby.caregivers.mother') },
+              { value: 'father', label: t('baby.caregivers.father') },
+              { value: 'grandma', label: t('baby.caregivers.grandma') },
+              { value: 'grandad', label: t('baby.caregivers.grandad') },
+              { value: 'aunt', label: t('baby.caregivers.aunt') },
+              { value: 'uncle', label: t('baby.caregivers.uncle') },
+              { value: 'other', label: t('baby.meals.other') },
+            ]}
+          />
           <SelectGroup
             label={t('onboarding.bloodType')}
             value={bloodType}
