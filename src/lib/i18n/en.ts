@@ -8,6 +8,7 @@ export const en = {
     error: 'Error',
     optional: 'Optional',
     unknown: 'Unknown',
+    recentLogin: 'Security notice: Please sign out and sign in again before deleting your account for verification.',
   },
   auth: {
     tagline: 'Every little moment, remembered.',

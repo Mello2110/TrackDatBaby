@@ -54,7 +54,11 @@ export default function SettingsPage() {
       await deleteUser(user)
       router.replace('/login')
     } catch (err: any) {
-      setError(err.message)
+      if (err.code === 'auth/requires-recent-login') {
+        setError(t('common.recentLogin'))
+      } else {
+        setError(err.message)
+      }
       setShowDeleteConfirm(false)
     }
   }
