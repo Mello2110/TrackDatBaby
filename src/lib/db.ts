@@ -95,6 +95,36 @@ export async function updateBabyProfile(
   await updateDoc(doc(db, 'babies', babyId), { ...profile })
 }
 
+export async function deleteBaby(babyId: string, uid: string) {
+  const babyRef = doc(db, 'babies', babyId)
+  const babySnap = await getDoc(babyRef)
+  if (!babySnap.exists()) return
+
+  const data = babySnap.data()
+  const caregivers = data.caregivers || []
+  
+  // Only someone with full access can delete
+  const me = caregivers.find((c: any) => c.userId === uid)
+  if (me?.accessLevel !== 'full') {
+    throw new Error('Only caregivers with full access can delete the profile.')
+  }
+
+  // Remove reference from all caregivers' linkedBabies
+  const caregiverIds = data.caregiverIds || caregivers.map((c: any) => c.userId)
+  await Promise.all(caregiverIds.map(async (id: string) => {
+    const userRef = doc(db, 'users', id)
+    const userSnap = await getDoc(userRef)
+    if (userSnap.exists()) {
+      const userData = userSnap.data()
+      const updatedBabies = (userData.linkedBabies || []).filter((bid: string) => bid !== babyId)
+      await updateDoc(userRef, { linkedBabies: updatedBabies })
+    }
+  }))
+
+  // Delete the baby document itself
+  await deleteDoc(babyRef)
+}
+
 // ── ACCESS CONTROL HELPERS ────────────────────────────────
 export function isCaregiver(baby: BabyProfile, uid: string) {
   return baby.caregivers.some((c) => c.userId === uid)

@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getBaby, updateBabyProfile, hasFullAccess } from '@/lib/db'
+import { getBaby, updateBabyProfile, hasFullAccess, deleteBaby } from '@/lib/db'
 import { Topbar, InputGroup, SelectGroup } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { BabyProfile } from '@/types'
@@ -19,12 +19,15 @@ export default function BabyProfilePage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user } = useAuth()
   const { t } = useLanguage()
+  const router = useRouter()
 
   const [baby, setBaby] = useState<BabyProfile | null>(null)
   const [canEdit, setCanEdit] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const [name, setName] = useState('')
   const [dob, setDob] = useState('')
@@ -64,6 +67,19 @@ export default function BabyProfilePage() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err: any) { setError(err.message) }
     finally { setSaving(false) }
+  }
+
+  async function handleDelete() {
+    if (!canEdit || !user) return
+    setDeleting(true)
+    try {
+      await deleteBaby(babyId, user.uid)
+      router.replace('/dashboard')
+    } catch (err: any) {
+      setError(err.message)
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   return (
@@ -148,9 +164,43 @@ export default function BabyProfilePage() {
 
         {error && <p className="text-sm mb-4" style={{ color: 'var(--danger)' }}>{error}</p>}
         {canEdit && (
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? t('common.saving') : saved ? t('baby.profile.saved') : t('baby.profile.saveBtn')}
-          </button>
+          <>
+            <button className="btn-primary mb-6" onClick={handleSave} disabled={saving}>
+              {saving ? t('common.saving') : saved ? t('baby.profile.saved') : t('baby.profile.saveBtn')}
+            </button>
+
+            <div className="divider mb-6" />
+            <div className="sec-title">{t('baby.parentProfile.dangerZone')}</div>
+            {!showDeleteConfirm ? (
+              <button
+                className="btn-outline mb-10"
+                style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                {t('baby.profile.deleteBtn')}
+              </button>
+            ) : (
+              <div className="rounded-[14px] p-5 mb-10" style={{ background: 'var(--rose-bg)', border: '2px solid var(--danger)' }}>
+                <p className="text-[15px] font-bold mb-1" style={{ color: 'var(--danger)' }}>{t('baby.profile.deleteTitle')}</p>
+                <p className="text-[13px] mb-5 leading-relaxed" style={{ color: 'var(--text2)' }}>
+                  {t('baby.profile.deleteConfirm')}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 py-[12px] rounded-[10px] text-[14px] font-semibold"
+                    style={{ background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer' }}
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? t('common.saving') : t('baby.profile.deleteAction')}
+                  </button>
+                  <button className="flex-1 btn-ghost" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

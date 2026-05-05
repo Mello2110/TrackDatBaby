@@ -146,6 +146,10 @@ export const en = {
       vaccinationsPh: 'e.g. MMR, DTP…',
       saveBtn: 'Save profile',
       saved: 'Saved!',
+      deleteBtn: 'Delete baby profile',
+      deleteTitle: 'Delete profile?',
+      deleteConfirm: 'This will permanently remove the baby profile for all caregivers. This action cannot be undone.',
+      deleteAction: 'Yes, delete profile',
     },
     meals: {
       title: 'Meals',

@@ -148,6 +148,10 @@ export const de: AppTranslation = {
       vaccinationsPh: 'z.B. MMR, DTP…',
       saveBtn: 'Profil speichern',
       saved: 'Gespeichert!',
+      deleteBtn: 'Baby-Profil löschen',
+      deleteTitle: 'Profil löschen?',
+      deleteConfirm: 'Dies wird das Baby-Profil permanent für alle Betreuer entfernen. Diese Aktion kann nicht rückgängig gemacht werden.',
+      deleteAction: 'Ja, Profil löschen',
     },
     meals: {
       title: 'Mahlzeiten',
