@@ -2,9 +2,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signUpWithEmail, signInWithGoogle, signInWithApple } from '@/lib/auth'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
@@ -50,36 +52,36 @@ export default function RegisterPage() {
             <path d="M12 19v3M9 21h6"/>
           </svg>
         </div>
-        <h1 style={{ color: 'var(--text)' }} className="text-[26px] font-bold tracking-tight mb-1">Create account</h1>
-        <p style={{ color: 'var(--text2)' }} className="text-sm">Welcome to BabyTrack</p>
+        <h1 style={{ color: 'var(--text)' }} className="text-[26px] font-bold tracking-tight mb-1">{t('auth.createTitle')}</h1>
+        <p style={{ color: 'var(--text2)' }} className="text-sm">{t('auth.welcome')}</p>
       </div>
 
       <form onSubmit={handleRegister}>
         <div className="mb-4">
-          <label className="input-label">Email</label>
+          <label className="input-label">{t('auth.email')}</label>
           <input className="input-field" type="email" value={email}
             onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
         </div>
         <div className="mb-4">
-          <label className="input-label">Password</label>
+          <label className="input-label">{t('auth.password')}</label>
           <input className="input-field" type="password" value={password}
-            onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" required minLength={6} />
+            onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.minChars')} required minLength={6} />
         </div>
         <div className="flex items-center gap-2 mb-5">
           <div className={`toggle-track ${rememberMe ? 'active' : ''}`} onClick={() => setRememberMe(!rememberMe)}>
             <div className="toggle-thumb" />
           </div>
-          <span style={{ color: 'var(--text2)', fontSize: 13 }}>Keep me signed in</span>
+          <span style={{ color: 'var(--text2)', fontSize: 13 }}>{t('auth.keepSignedIn')}</span>
         </div>
         {error && <p className="text-sm mb-3" style={{ color: 'var(--danger)' }}>{error}</p>}
         <button className="btn-primary mb-3" type="submit" disabled={loading}>
-          {loading ? 'Creating account…' : 'Create account'}
+          {loading ? t('auth.creating') : t('auth.createBtn')}
         </button>
       </form>
 
       <div className="flex items-center gap-3 my-4">
         <div className="flex-1 h-[2px]" style={{ background: 'var(--border2)' }} />
-        <span style={{ color: 'var(--text3)', fontSize: 12, fontWeight: 600 }}>or</span>
+        <span style={{ color: 'var(--text3)', fontSize: 12, fontWeight: 600 }}>{t('auth.or')}</span>
         <div className="flex-1 h-[2px]" style={{ background: 'var(--border2)' }} />
       </div>
 
@@ -90,12 +92,12 @@ export default function RegisterPage() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-        Sign up with Google
+        {t('auth.googleSignUp')}
       </button>
 
       <div className="text-center mt-3">
-        <span style={{ color: 'var(--text2)', fontSize: 13 }}>Already have an account? </span>
-        <a href="/login" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Sign in</a>
+        <span style={{ color: 'var(--text2)', fontSize: 13 }}>{t('auth.alreadyHave')}</span>
+        <a href="/login" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>{t('auth.signInBtn')}</a>
       </div>
     </div>
   )

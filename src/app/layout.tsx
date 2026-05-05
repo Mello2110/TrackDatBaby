@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 import { ThemeProvider } from '@/lib/ThemeContext'
+import { LanguageProvider } from '@/lib/LanguageContext'
 
 export const metadata: Metadata = {
   title: 'BabyTrack',
@@ -20,9 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <AuthProvider>
-            <div className="app-frame">
-              {children}
-            </div>
+            <LanguageProvider>
+              <div className="app-frame">
+                {children}
+              </div>
+            </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getDevelopments, addDevelopment, deleteDevelopment } from '@/lib/db'
 import { Topbar, EntryTime, EmptyState, Pill } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 import { Timestamp } from 'firebase/firestore'
 import type { MilestoneType, ComparisonStatus } from '@/types'
 
@@ -12,15 +13,16 @@ function nowLocal() {
   return d.toISOString().slice(0, 16)
 }
 
-const COMPARISON_OPTIONS: { value: ComparisonStatus; label: string; color: 'mint' | 'blue' | 'accent' }[] = [
-  { value: 'early', label: 'Early ★', color: 'mint' },
-  { value: 'on_time', label: 'On time ✓', color: 'blue' },
-  { value: 'delayed', label: 'A bit later', color: 'accent' },
+const getComparisonOptions = (t: any): { value: ComparisonStatus; label: string; color: 'mint' | 'blue' | 'accent' }[] => [
+  { value: 'early', label: t('baby.wellbeing.early'), color: 'mint' },
+  { value: 'on_time', label: t('baby.wellbeing.on_time'), color: 'blue' },
+  { value: 'delayed', label: t('baby.wellbeing.delayed'), color: 'accent' },
 ]
 
 export default function DevelopmentPage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [entries, setEntries] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -59,28 +61,28 @@ export default function DevelopmentPage() {
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Log milestone" backLabel="Cancel" action={{ label: 'Save', onClick: () => {} }} />
+      <Topbar title={t('baby.wellbeing.logMilestone')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
-          <div className="mb-4"><label className="input-label">Timestamp</label>
+          <div className="mb-4"><label className="input-label">{t('baby.meals.timestamp')}</label>
             <input className="input-field" type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} /></div>
-          <div className="mb-4"><label className="input-label">Milestone type</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.milestoneType')}</label>
             <select className="input-field" value={milestoneType} onChange={(e) => setMilestoneType(e.target.value as MilestoneType)}>
-              <option value="first_words">First words</option><option value="walking">Walking</option>
-              <option value="social">Social</option><option value="learning">Learning</option><option value="other">Other</option>
+              <option value="first_words">{t('baby.wellbeing.first_words')}</option><option value="walking">{t('baby.wellbeing.walking')}</option>
+              <option value="social">{t('baby.wellbeing.social')}</option><option value="learning">{t('baby.wellbeing.learning')}</option><option value="other">{t('baby.meals.other')}</option>
             </select></div>
-          <div className="mb-4"><label className="input-label">Description</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.description')}</label>
             <textarea className="input-field" value={description} onChange={(e) => setDescription(e.target.value)}
-              rows={3} placeholder="Describe the milestone…" required /></div>
-          <div className="mb-4"><label className="input-label">Age in months</label>
+              rows={3} placeholder={t('baby.wellbeing.descriptionPh')} required /></div>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.ageInMonths')}</label>
             <input className="input-field" type="number" value={ageInMonths}
               onChange={(e) => setAgeInMonths(e.target.value)} placeholder="e.g. 12" /></div>
 
           {/* Comparison status — 3 toggle buttons */}
           <div className="mb-5">
-            <label className="input-label">Timing</label>
+            <label className="input-label">{t('baby.wellbeing.timing')}</label>
             <div className="flex gap-2">
-              {COMPARISON_OPTIONS.map((o) => (
+              {getComparisonOptions(t).map((o) => (
                 <button
                   key={o.value}
                   type="button"
@@ -97,13 +99,13 @@ export default function DevelopmentPage() {
               ))}
             </div>
             <p className="text-[12px] mt-3 italic" style={{ color: 'var(--text3)' }}>
-              Every baby develops at their own pace — all milestones come in time.
+              {t('baby.wellbeing.pace')}
             </p>
           </div>
 
-          <div className="mb-5"><label className="input-label">Notes (optional)</label>
-            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Any notes…" /></div>
-          <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save entry'}</button>
+          <div className="mb-5"><label className="input-label">{t('onboarding.notes')} ({t('common.optional')})</label>
+            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder={t('baby.meals.notesPh')} /></div>
+          <button className="btn-primary" type="submit" disabled={saving}>{saving ? t('common.saving') : t('baby.meals.saveEntry')}</button>
         </form>
       </div>
     </div>
@@ -111,35 +113,35 @@ export default function DevelopmentPage() {
 
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Development" backLabel="Back" backHref={`/baby/${babyId}/wellbeing`}
-        action={{ label: '+ Add', onClick: () => setShowForm(true) }} />
+      <Topbar title={t('baby.wellbeing.development')} backLabel={t('common.back')} backHref={`/baby/${babyId}/wellbeing`}
+        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }} />
       <div className="scroll-body">
         {latest ? (
           <div className="hi-card mb-3" style={{ background: 'var(--lav-bg)' }}>
-            <div className="text-[11px] mb-1" style={{ color: 'var(--text3)' }}>Latest milestone</div>
+            <div className="text-[11px] mb-1" style={{ color: 'var(--text3)' }}>{t('baby.wellbeing.logMilestone')}</div>
             <div className="text-[15px] font-bold mb-1" style={{ color: 'var(--text)' }}>
-              {latest.milestoneType?.replace('_', ' ')}
+              {t(`baby.wellbeing.${latest.milestoneType}`)}
             </div>
             <div className="text-[13px] mb-2" style={{ color: 'var(--text2)' }}>{latest.description}</div>
             <div className="flex gap-2 flex-wrap">
-              <Pill color="lav">{latest.ageInMonths} months</Pill>
-              <Pill color={COMPARISON_OPTIONS.find(o => o.value === latest.comparisonStatus)?.color || 'neutral'}>
-                {COMPARISON_OPTIONS.find(o => o.value === latest.comparisonStatus)?.label || latest.comparisonStatus}
+              <Pill color="lav">{latest.ageInMonths} {t('baby.dashboard.months')}</Pill>
+              <Pill color={getComparisonOptions(t).find(o => o.value === latest.comparisonStatus)?.color || 'neutral'}>
+                {getComparisonOptions(t).find(o => o.value === latest.comparisonStatus)?.label || latest.comparisonStatus}
               </Pill>
             </div>
           </div>
-        ) : <EmptyState message={'No milestones logged yet.\nTap + Add to get started.'} />}
+        ) : <EmptyState message={t('baby.wellbeing.developmentSub')} />}
 
         {entries.length > 0 && (
           <>
-            <div className="sec-title mt-4">All milestones</div>
+            <div className="sec-title mt-4">{t('baby.wellbeing.allMilestones')}</div>
             {entries.map((e) => (
               <div key={e.id} className="entry-card">
                 <EntryTime ts={e.timestamp} />
                 <div className="flex justify-between items-start">
                   <div className="flex-1 pr-3">
                     <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                      {e.milestoneType?.replace('_', ' ')} · {e.ageInMonths}m
+                      {t(`baby.wellbeing.${e.milestoneType}`)} · {e.ageInMonths}{t('baby.dashboard.mo')}
                     </div>
                     <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text2)' }}>{e.description}</div>
                     {e.notes && <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>{e.notes}</div>}
@@ -147,7 +149,7 @@ export default function DevelopmentPage() {
                   <button onClick={async () => { await deleteDevelopment(babyId, e.id); load() }}
                     className="text-[11px] px-2 py-1 rounded flex-shrink-0"
                     style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
-                    Delete
+                    {t('baby.meals.delete')}
                   </button>
                 </div>
               </div>

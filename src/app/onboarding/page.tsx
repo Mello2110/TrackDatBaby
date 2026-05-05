@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { updateUserProfile, createBaby } from '@/lib/db'
 import { InputGroup, SelectGroup } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 
 function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
@@ -37,6 +38,7 @@ function OnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, refreshUserData } = useAuth()
+  const { t } = useLanguage()
 
   const startStep = searchParams.get('step') === 'baby' ? 2 : 0
   const [step, setStep] = useState(startStep)
@@ -124,34 +126,34 @@ function OnboardingContent() {
           </svg>
         </div>
         <h1 className="text-[28px] font-bold mb-3" style={{ color: 'var(--text)', lineHeight: 1.2 }}>
-          Welcome to<br />BabyTrack
+          {t('onboarding.welcomeTitle')}
         </h1>
         <p className="text-[15px] mb-2" style={{ color: 'var(--text2)', lineHeight: 1.6 }}>
-          Track every little moment — meals, milestones, health and growth — all in one place.
+          {t('onboarding.welcomeDesc')}
         </p>
         <p className="text-[14px] mb-10" style={{ color: 'var(--text3)', lineHeight: 1.6 }}>
-          You can invite family members and caregivers to share access.
+          {t('onboarding.welcomeSub')}
         </p>
 
         {/* Feature list */}
         {[
           {
-            label: 'Feeding logs',
+            label: t('onboarding.featMeals'),
             color: '--rose-bg', stroke: '--rose',
             icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" strokeWidth="2" strokeLinecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
           },
           {
-            label: 'Growth tracking',
+            label: t('onboarding.featGrowth'),
             color: '--mint-bg', stroke: '--mint',
             icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mint)" strokeWidth="2" strokeLinecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
           },
           {
-            label: 'Milestones',
+            label: t('onboarding.featMilestones'),
             color: '--lav-bg', stroke: '--lav',
             icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lav)" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
           },
           {
-            label: 'Illness & health',
+            label: t('onboarding.featHealth'),
             color: '--blue-bg', stroke: '--blue',
             icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
           },
@@ -169,7 +171,7 @@ function OnboardingContent() {
       </div>
 
       <button className="btn-primary" onClick={() => setStep(1)}>
-        Get started
+        {t('onboarding.getStarted')}
       </button>
     </div>
   )
@@ -186,44 +188,44 @@ function OnboardingContent() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          Back
+          {t('common.back')}
         </button>
         <ProgressDots step={1} total={3} />
         <div style={{ width: 40 }} />
       </div>
       <div className="scroll-body">
-        <h2 className="text-[20px] font-bold mb-1" style={{ color: 'var(--text)' }}>Your profile</h2>
-        <p className="text-[13px] mb-5" style={{ color: 'var(--text3)' }}>Tell us a bit about yourself. This helps us personalise your experience.</p>
+        <h2 className="text-[20px] font-bold mb-1" style={{ color: 'var(--text)' }}>{t('onboarding.parentTitle')}</h2>
+        <p className="text-[13px] mb-5" style={{ color: 'var(--text3)' }}>{t('onboarding.parentDesc')}</p>
 
         <form onSubmit={handleParentSave}>
-          <InputGroup label="Full name" value={parentName} onChange={setParentName} placeholder="Your name" required />
-          <InputGroup label="Date of birth" type="date" value={parentDob} onChange={setParentDob} />
+          <InputGroup label={t('onboarding.fullName')} value={parentName} onChange={setParentName} placeholder={t('onboarding.fullName')} required />
+          <InputGroup label={t('onboarding.dob')} type="date" value={parentDob} onChange={setParentDob} />
           <SelectGroup
-            label="Blood type"
+            label={t('onboarding.bloodType')}
             value={bloodType}
             onChange={setBloodType}
             options={[
-              { value: '', label: 'Unknown' },
+              { value: '', label: t('common.unknown') },
               { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
               { value: 'B+', label: 'B+' }, { value: 'B-', label: 'B−' },
               { value: 'AB+', label: 'AB+' }, { value: 'AB-', label: 'AB−' },
               { value: 'O+', label: 'O+' }, { value: 'O-', label: 'O−' },
             ]}
           />
-          <InputGroup label="Family diseases" value={familyDiseases} onChange={setFamilyDiseases}
-            placeholder="e.g. Diabetes, heart disease…" textarea rows={2} />
-          <InputGroup label="Personal medical history" value={personalDiseases} onChange={setPersonalDiseases}
-            placeholder="e.g. Asthma, allergies…" textarea rows={2} />
-          <InputGroup label="Notes" value={parentNotes} onChange={setParentNotes}
-            placeholder="Anything else…" textarea rows={2} />
+          <InputGroup label={t('onboarding.familyDis')} value={familyDiseases} onChange={setFamilyDiseases}
+            placeholder={t('onboarding.familyDisPh')} textarea rows={2} />
+          <InputGroup label={t('onboarding.personalDis')} value={personalDiseases} onChange={setPersonalDiseases}
+            placeholder={t('onboarding.personalDisPh')} textarea rows={2} />
+          <InputGroup label={t('onboarding.notes')} value={parentNotes} onChange={setParentNotes}
+            placeholder={t('onboarding.notesPh')} textarea rows={2} />
 
           {error && <p className="text-sm mb-3" style={{ color: 'var(--danger)' }}>{error}</p>}
 
           <button className="btn-primary mb-3" type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Continue'}
+            {saving ? t('common.saving') : t('onboarding.continueBtn')}
           </button>
           <button type="button" className="btn-ghost" onClick={() => setStep(2)}>
-            Skip for now
+            {t('onboarding.skipNow')}
           </button>
         </form>
       </div>
@@ -243,7 +245,7 @@ function OnboardingContent() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            Back
+            {t('common.back')}
           </button>
         ) : (
           <button
@@ -254,25 +256,25 @@ function OnboardingContent() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            Dashboard
+            {t('onboarding.dashboardBtn')}
           </button>
         )}
         {startStep !== 2 && <ProgressDots step={2} total={3} />}
         <div style={{ width: 40 }} />
       </div>
       <div className="scroll-body">
-        <h2 className="text-[20px] font-bold mb-1" style={{ color: 'var(--text)' }}>Add your baby</h2>
+        <h2 className="text-[20px] font-bold mb-1" style={{ color: 'var(--text)' }}>{t('onboarding.babyTitle')}</h2>
         <p className="text-[13px] mb-5" style={{ color: 'var(--text3)' }}>
-          {startStep === 2 ? 'Add another baby profile.' : "Let's set up your baby's profile."}
+          {startStep === 2 ? t('onboarding.babyDescAnother') : t('onboarding.babyDescFirst')}
         </p>
 
         <form onSubmit={handleBabySave}>
-          <InputGroup label="Baby's name" value={babyName} onChange={setBabyName} placeholder="e.g. Emma" required />
-          <InputGroup label="Date of birth" type="date" value={babyDob} onChange={setBabyDob} required />
+          <InputGroup label={t('onboarding.babyName')} value={babyName} onChange={setBabyName} placeholder="e.g. Emma" required />
+          <InputGroup label={t('onboarding.dob')} type="date" value={babyDob} onChange={setBabyDob} required />
 
           {/* Gender selector */}
           <div className="mb-4">
-            <label className="input-label">Gender</label>
+            <label className="input-label">{t('onboarding.gender')}</label>
             <div className="flex gap-2">
               {(['girl', 'boy', 'other'] as const).map((g) => (
                 <button
@@ -286,18 +288,18 @@ function OnboardingContent() {
                     border: `2px solid ${babyGender === g ? 'var(--accent)' : 'var(--border2)'}`,
                   }}
                 >
-                  {g}
+                  {t(`onboarding.${g}`)}
                 </button>
               ))}
             </div>
           </div>
 
           <SelectGroup
-            label="Blood type"
+            label={t('onboarding.bloodType')}
             value={babyBloodType}
             onChange={setBabyBloodType}
             options={[
-              { value: '', label: 'Unknown' },
+              { value: '', label: t('common.unknown') },
               { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
               { value: 'B+', label: 'B+' }, { value: 'B-', label: 'B−' },
               { value: 'AB+', label: 'AB+' }, { value: 'AB-', label: 'AB−' },
@@ -307,12 +309,12 @@ function OnboardingContent() {
 
           <div className="flex gap-2 mb-4">
             <div className="flex-1">
-              <label className="input-label">Birth weight</label>
+              <label className="input-label">{t('onboarding.birthWeight')}</label>
               <input className="input-field" type="text" value={birthWeight}
                 onChange={(e) => setBirthWeight(e.target.value)} placeholder="e.g. 3.2 kg" />
             </div>
             <div className="flex-1">
-              <label className="input-label">Birth height</label>
+              <label className="input-label">{t('onboarding.birthHeight')}</label>
               <input className="input-field" type="text" value={birthHeight}
                 onChange={(e) => setBirthHeight(e.target.value)} placeholder="e.g. 50 cm" />
             </div>
@@ -321,7 +323,7 @@ function OnboardingContent() {
           {error && <p className="text-sm mb-3" style={{ color: 'var(--danger)' }}>{error}</p>}
 
           <button className="btn-primary" type="submit" disabled={saving}>
-            {saving ? 'Creating…' : startStep === 2 ? 'Add baby' : 'Create profile & finish'}
+            {saving ? t('onboarding.creatingBtn') : startStep === 2 ? t('onboarding.addBabyBtn') : t('onboarding.createFinishBtn')}
           </button>
 
           {startStep !== 2 && (
@@ -330,7 +332,7 @@ function OnboardingContent() {
               className="btn-ghost mt-3"
               onClick={() => router.push('/dashboard')}
             >
-              I have an invite code (Skip)
+              {t('onboarding.skipInvite')}
             </button>
           )}
         </form>

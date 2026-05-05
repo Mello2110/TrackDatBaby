@@ -4,10 +4,11 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getBaby, updateBabyProfile, hasFullAccess } from '@/lib/db'
 import { Topbar, InputGroup, SelectGroup } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 import type { BabyProfile } from '@/types'
 
-const BLOOD_OPTIONS = [
-  { value: '', label: 'Unknown' },
+const getBloodOptions = (t: any) => [
+  { value: '', label: t('common.unknown') },
   { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
   { value: 'B+', label: 'B+' }, { value: 'B-', label: 'B−' },
   { value: 'AB+', label: 'AB+' }, { value: 'AB-', label: 'AB−' },
@@ -17,6 +18,7 @@ const BLOOD_OPTIONS = [
 export default function BabyProfilePage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user } = useAuth()
+  const { t } = useLanguage()
 
   const [baby, setBaby] = useState<BabyProfile | null>(null)
   const [canEdit, setCanEdit] = useState(false)
@@ -67,16 +69,16 @@ export default function BabyProfilePage() {
   return (
     <div className="page-bg flex flex-col min-h-screen">
       <Topbar
-        title="Baby profile"
-        backLabel="Back"
+        title={t('baby.profile.title')}
+        backLabel={t('common.back')}
         backHref={`/baby/${babyId}`}
-        action={canEdit ? { label: saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save', onClick: handleSave } : undefined}
+        action={canEdit ? { label: saving ? t('common.saving') : saved ? t('baby.profile.saved') + ' ✓' : t('common.save'), onClick: handleSave } : undefined}
       />
       <div className="scroll-body">
         {!canEdit && (
           <div className="rounded-[10px] px-4 py-3 mb-5 text-[13px]"
             style={{ background: 'var(--surface)', border: '2px solid var(--border2)', color: 'var(--text3)' }}>
-            Read-only — only Full Access caregivers can edit this profile.
+            {t('baby.profile.readOnly')}
           </div>
         )}
 
@@ -90,12 +92,12 @@ export default function BabyProfilePage() {
           </div>
         </div>
 
-        <InputGroup label="Name" value={name} onChange={setName} placeholder="Baby's name" required disabled={!canEdit} />
-        <InputGroup label="Date of birth" type="date" value={dob} onChange={setDob} disabled={!canEdit} />
+        <InputGroup label={t('baby.profile.name')} value={name} onChange={setName} placeholder={t('baby.profile.namePh')} required disabled={!canEdit} />
+        <InputGroup label={t('onboarding.dob')} type="date" value={dob} onChange={setDob} disabled={!canEdit} />
 
         {/* Gender */}
         <div className="mb-4">
-          <label className="input-label">Gender</label>
+          <label className="input-label">{t('onboarding.gender')}</label>
           <div className="flex gap-2">
             {(['girl', 'boy', 'other'] as const).map((g) => (
               <button
@@ -112,42 +114,42 @@ export default function BabyProfilePage() {
                   cursor: !canEdit ? 'default' : 'pointer',
                 }}
               >
-                {g}
-              </button>
+                  {t(`onboarding.${g}`)}
+                </button>
             ))}
           </div>
         </div>
 
-        <SelectGroup label="Blood type" value={bloodType} onChange={canEdit ? setBloodType : () => {}} options={BLOOD_OPTIONS} />
+        <SelectGroup label={t('onboarding.bloodType')} value={bloodType} onChange={canEdit ? setBloodType : () => {}} options={getBloodOptions(t)} />
 
         <div className="flex gap-2 mb-4">
           <div className="flex-1">
-            <label className="input-label">Birth weight</label>
+            <label className="input-label">{t('onboarding.birthWeight')}</label>
             <input className="input-field" type="text" value={birthWeight}
               onChange={(e) => canEdit && setBirthWeight(e.target.value)}
               disabled={!canEdit} placeholder="e.g. 3.2 kg" />
           </div>
           <div className="flex-1">
-            <label className="input-label">Birth height</label>
+            <label className="input-label">{t('onboarding.birthHeight')}</label>
             <input className="input-field" type="text" value={birthHeight}
               onChange={(e) => canEdit && setBirthHeight(e.target.value)}
               disabled={!canEdit} placeholder="e.g. 50 cm" />
           </div>
         </div>
 
-        <InputGroup label="Allergies" value={allergies} onChange={canEdit ? setAllergies : () => {}}
-          placeholder="e.g. Peanuts, dairy…" textarea rows={2} disabled={!canEdit} />
-        <InputGroup label="Current medications" value={medications} onChange={canEdit ? setMedications : () => {}}
-          placeholder="e.g. Vitamin D drops…" textarea rows={2} disabled={!canEdit} />
-        <InputGroup label="Vaccinations" value={vaccinations} onChange={canEdit ? setVaccinations : () => {}}
-          placeholder="e.g. MMR, DTP…" textarea rows={2} disabled={!canEdit} />
-        <InputGroup label="Notes" value={notes} onChange={canEdit ? setNotes : () => {}}
-          placeholder="Any other notes…" textarea rows={3} disabled={!canEdit} />
+        <InputGroup label={t('baby.profile.allergies')} value={allergies} onChange={canEdit ? setAllergies : () => {}}
+          placeholder={t('baby.profile.allergiesPh')} textarea rows={2} disabled={!canEdit} />
+        <InputGroup label={t('baby.profile.medications')} value={medications} onChange={canEdit ? setMedications : () => {}}
+          placeholder={t('baby.profile.medicationsPh')} textarea rows={2} disabled={!canEdit} />
+        <InputGroup label={t('baby.profile.vaccinations')} value={vaccinations} onChange={canEdit ? setVaccinations : () => {}}
+          placeholder={t('baby.profile.vaccinationsPh')} textarea rows={2} disabled={!canEdit} />
+        <InputGroup label={t('onboarding.notes')} value={notes} onChange={canEdit ? setNotes : () => {}}
+          placeholder={t('onboarding.notesPh')} textarea rows={3} disabled={!canEdit} />
 
         {error && <p className="text-sm mb-4" style={{ color: 'var(--danger)' }}>{error}</p>}
         {canEdit && (
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : saved ? 'Saved!' : 'Save profile'}
+            {saving ? t('common.saving') : saved ? t('baby.profile.saved') : t('baby.profile.saveBtn')}
           </button>
         )}
       </div>

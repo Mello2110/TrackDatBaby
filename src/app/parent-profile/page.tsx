@@ -5,9 +5,10 @@ import { useAuth } from '@/lib/AuthContext'
 import { updateUserProfile } from '@/lib/db'
 import { deleteUser } from 'firebase/auth'
 import { Topbar, InputGroup, SelectGroup } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 
-const BLOOD_OPTIONS = [
-  { value: '', label: 'Unknown' },
+const getBloodOptions = (t: any) => [
+  { value: '', label: t('baby.parentProfile.bloodUnknown') },
   { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
   { value: 'B+', label: 'B+' }, { value: 'B-', label: 'B−' },
   { value: 'AB+', label: 'AB+' }, { value: 'AB-', label: 'AB−' },
@@ -17,6 +18,7 @@ const BLOOD_OPTIONS = [
 export default function ParentProfilePage() {
   const router = useRouter()
   const { user, userData, refreshUserData } = useAuth()
+  const { t } = useLanguage()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
@@ -64,10 +66,10 @@ export default function ParentProfilePage() {
   return (
     <div className="page-bg flex flex-col min-h-screen">
       <Topbar
-        title="Your profile"
-        backLabel="Back"
+        title={t('baby.parentProfile.title')}
+        backLabel={t('common.back')}
         backHref="/dashboard"
-        action={{ label: saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save', onClick: handleSave }}
+        action={{ label: saving ? t('common.saving') : saved ? t('baby.profile.saved') + ' ✓' : t('common.save'), onClick: handleSave }}
       />
       <div className="scroll-body">
         <div className="flex justify-center mb-6">
@@ -79,35 +81,35 @@ export default function ParentProfilePage() {
           </div>
         </div>
 
-        <InputGroup label="Full name" value={name} onChange={setName} placeholder="Your name" required />
-        <InputGroup label="Date of birth" type="date" value={dob} onChange={setDob} />
-        <SelectGroup label="Blood type" value={bloodType} onChange={setBloodType} options={BLOOD_OPTIONS} />
-        <InputGroup label="Family medical history" value={familyDiseases} onChange={setFamilyDiseases}
-          placeholder="e.g. Diabetes, heart disease…" textarea rows={3} />
-        <InputGroup label="Personal medical history" value={personalDiseases} onChange={setPersonalDiseases}
-          placeholder="e.g. Asthma, allergies…" textarea rows={3} />
-        <InputGroup label="Notes" value={notes} onChange={setNotes} placeholder="Anything else…" textarea rows={3} />
+        <InputGroup label={t('baby.parentProfile.fullName')} value={name} onChange={setName} placeholder={t('baby.parentProfile.fullNamePh')} required />
+        <InputGroup label={t('baby.parentProfile.dob')} type="date" value={dob} onChange={setDob} />
+        <SelectGroup label={t('baby.parentProfile.bloodType')} value={bloodType} onChange={setBloodType} options={getBloodOptions(t)} />
+        <InputGroup label={t('baby.parentProfile.familyHistory')} value={familyDiseases} onChange={setFamilyDiseases}
+          placeholder={t('baby.parentProfile.familyHistoryPh')} textarea rows={3} />
+        <InputGroup label={t('baby.parentProfile.personalHistory')} value={personalDiseases} onChange={setPersonalDiseases}
+          placeholder={t('baby.parentProfile.personalHistoryPh')} textarea rows={3} />
+        <InputGroup label={t('onboarding.notes')} value={notes} onChange={setNotes} placeholder={t('onboarding.notesPh')} textarea rows={3} />
 
         {error && <p className="text-sm mb-4" style={{ color: 'var(--danger)' }}>{error}</p>}
         <button className="btn-primary mb-4" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save profile'}
+          {saving ? t('common.saving') : saved ? t('baby.profile.saved') : t('baby.profile.saveBtn')}
         </button>
 
         <div className="divider my-6" />
-        <div className="sec-title">Danger zone</div>
+        <div className="sec-title">{t('baby.parentProfile.dangerZone')}</div>
         {!showDeleteConfirm ? (
           <button
             className="btn-outline"
             style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
             onClick={() => setShowDeleteConfirm(true)}
           >
-            Delete account
+            {t('baby.parentProfile.deleteAcc')}
           </button>
         ) : (
           <div className="rounded-[14px] p-4" style={{ background: 'var(--rose-bg)', border: '2px solid var(--danger)' }}>
-            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--danger)' }}>Are you sure?</p>
+            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--danger)' }}>{t('baby.parentProfile.areYouSure')}</p>
             <p className="text-[13px] mb-4" style={{ color: 'var(--text2)' }}>
-              This permanently deletes your account. Baby profiles remain.
+              {t('baby.parentProfile.deleteWarning')}
             </p>
             <div className="flex gap-2">
               <button
@@ -115,9 +117,9 @@ export default function ParentProfilePage() {
                 style={{ background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer' }}
                 onClick={handleDeleteAccount}
               >
-                Yes, delete
+                {t('baby.parentProfile.yesDelete')}
               </button>
-              <button className="flex-1 btn-ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+              <button className="flex-1 btn-ghost" onClick={() => setShowDeleteConfirm(false)}>{t('common.cancel')}</button>
             </div>
           </div>
         )}

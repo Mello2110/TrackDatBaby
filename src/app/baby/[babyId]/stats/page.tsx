@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getStats, addStat } from '@/lib/db'
 import { Topbar, EntryTime, EmptyState } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 import type { StatType, StatUnit } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 
@@ -12,16 +13,17 @@ function nowLocal() {
   return d.toISOString().slice(0,16)
 }
 
-const STAT_TYPES: { value: StatType; label: string; unit: StatUnit; bg: string; stroke: string }[] = [
-  { value: 'weight', label: 'Weight', unit: 'kg', bg: '--rose-bg', stroke: '--rose' },
-  { value: 'height', label: 'Height', unit: 'cm', bg: '--mint-bg', stroke: '--mint' },
-  { value: 'head_circumference', label: 'Head circ.', unit: 'cm', bg: '--blue-bg', stroke: '--blue' },
-  { value: 'shoe_size', label: 'Shoe size', unit: 'eu', bg: '--accent-bg', stroke: '--accent' },
+const getStatTypes = (t: any): { value: StatType; label: string; unit: StatUnit; bg: string; stroke: string }[] => [
+  { value: 'weight', label: t('baby.dashboard.weight'), unit: 'kg', bg: '--rose-bg', stroke: '--rose' },
+  { value: 'height', label: t('baby.dashboard.height'), unit: 'cm', bg: '--mint-bg', stroke: '--mint' },
+  { value: 'head_circumference', label: t('baby.stats.headCirc'), unit: 'cm', bg: '--blue-bg', stroke: '--blue' },
+  { value: 'shoe_size', label: t('baby.stats.shoeSize'), unit: 'eu', bg: '--accent-bg', stroke: '--accent' },
 ]
 
 export default function StatsPage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [stats, setStats] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,6 +31,8 @@ export default function StatsPage() {
   const [value, setValue] = useState('')
   const [timestamp, setTimestamp] = useState(nowLocal())
   const [notes, setNotes] = useState('')
+
+  const STAT_TYPES = getStatTypes(t)
 
   useEffect(() => { loadStats() }, [babyId])
   async function loadStats() { setStats(await getStats(babyId)) }
@@ -54,20 +58,20 @@ export default function StatsPage() {
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Log measurement" backLabel="Cancel" action={{ label: 'Save', onClick: () => {} }} />
+      <Topbar title={t('baby.stats.logTitle')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
-          <div className="mb-4"><label className="input-label">Measurement</label>
+          <div className="mb-4"><label className="input-label">{t('baby.stats.measurement')}</label>
             <select className="input-field" value={statType} onChange={(e) => setStatType(e.target.value as StatType)}>
               {STAT_TYPES.map(s => <option key={s.value} value={s.value}>{s.label} ({s.unit})</option>)}
             </select></div>
-          <div className="mb-4"><label className="input-label">Value</label>
+          <div className="mb-4"><label className="input-label">{t('baby.stats.value')}</label>
             <input className="input-field" type="number" step="0.1" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.0" required /></div>
-          <div className="mb-4"><label className="input-label">Timestamp</label>
+          <div className="mb-4"><label className="input-label">{t('baby.meals.timestamp')}</label>
             <input className="input-field" type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} /></div>
-          <div className="mb-5"><label className="input-label">Notes</label>
-            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Any context…"/></div>
-          <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save measurement'}</button>
+          <div className="mb-5"><label className="input-label">{t('onboarding.notes')}</label>
+            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('baby.meals.notesPh')}/></div>
+          <button className="btn-primary" type="submit" disabled={saving}>{saving ? t('common.saving') : t('baby.stats.saveMeasurement')}</button>
         </form>
       </div>
     </div>
@@ -75,8 +79,8 @@ export default function StatsPage() {
 
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Stats" backLabel="Back" backHref={`/baby/${babyId}`}
-        action={{ label: '+ Add', onClick: () => setShowForm(true) }} />
+      <Topbar title={t('baby.dashboard.stats')} backLabel={t('common.back')} backHref={`/baby/${babyId}`}
+        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }} />
       <div className="scroll-body">
         {/* Summary grid */}
         <div className="grid grid-cols-2 gap-[10px] mb-5">
@@ -96,10 +100,10 @@ export default function StatsPage() {
         </div>
 
         {stats.length === 0 ? (
-          <EmptyState message="No measurements yet. Tap + Add to log one." />
+          <EmptyState message={t('baby.stats.empty')} />
         ) : (
           <>
-            <div className="sec-title">History</div>
+            <div className="sec-title">{t('baby.stats.history')}</div>
             {stats.map((s) => (
               <div key={s.id} className="entry-card">
                 <EntryTime ts={s.timestamp} />

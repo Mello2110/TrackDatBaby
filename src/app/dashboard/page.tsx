@@ -4,12 +4,14 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getUserBabies, redeemInviteCode } from '@/lib/db'
 import { Topbar, TabBar, Pill } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 import type { BabyProfile } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function DashboardPage() {
   const { user, userData } = useAuth()
   const router = useRouter()
+  const { t } = useLanguage()
   const [babies, setBabies] = useState<BabyProfile[]>([])
   const [inviteCode, setInviteCode] = useState('')
   const [inviteError, setInviteError] = useState('')
@@ -19,7 +21,7 @@ export default function DashboardPage() {
   const firstName = profile?.name?.split(' ')[0] || 'there'
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const greeting = hour < 12 ? t('dashboard.goodMorning') : hour < 17 ? t('dashboard.goodAfternoon') : t('dashboard.goodEvening')
 
   useEffect(() => {
     if (!user) return
@@ -82,9 +84,9 @@ export default function DashboardPage() {
             {firstName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1">
-            <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>{profile?.name || 'Your profile'}</div>
+            <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>{profile?.name || t('dashboard.yourProfile')}</div>
             <div className="text-[12px] mt-[1px]" style={{ color: 'var(--text3)' }}>
-              {profile?.bloodType ? `Blood type ${profile.bloodType} · ` : ''}View profile
+              {profile?.bloodType ? `${t('dashboard.bloodType')} ${profile.bloodType} · ` : ''}{t('dashboard.viewProfile')}
             </div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2" strokeLinecap="round">
@@ -93,13 +95,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Babies */}
-        <div className="sec-title">Babies</div>
+        <div className="sec-title">{t('dashboard.babiesTitle')}</div>
 
         {loading ? (
-          <div className="text-sm" style={{ color: 'var(--text3)' }}>Loading…</div>
+          <div className="text-sm" style={{ color: 'var(--text3)' }}>{t('common.loading')}</div>
         ) : babies.length === 0 ? (
           <div className="text-sm mb-4" style={{ color: 'var(--text3)' }}>
-            No babies added yet. Add your first one below.
+            {t('dashboard.noBabies')}
           </div>
         ) : (
           babies.map((baby) => {
@@ -117,14 +119,14 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Pill color={myAccess?.accessLevel === 'full' ? 'mint' : 'neutral'}>
-                    {myAccess?.accessLevel === 'full' ? 'Full access' : 'Caregiver'}
+                    {myAccess?.accessLevel === 'full' ? t('dashboard.fullAccess') : t('dashboard.caregiver')}
                   </Pill>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'Caregivers', value: `${baby.caregivers.length}` },
-                    { label: 'Gender', value: baby.gender },
-                    { label: 'Blood type', value: baby.bloodType || '—' },
+                    { label: t('dashboard.caregivers'), value: `${baby.caregivers.length}` },
+                    { label: t('dashboard.gender'), value: t(`onboarding.${baby.gender}`) },
+                    { label: t('dashboard.bloodType'), value: baby.bloodType || '—' },
                   ].map((s) => (
                     <div key={s.label} className="rounded-[8px] p-[10px] text-center"
                       style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
@@ -146,22 +148,22 @@ export default function DashboardPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Add another baby
+          {t('dashboard.addAnother')}
         </button>
 
         {/* Redeem invite */}
-        <div className="sec-title">Redeem invite</div>
+        <div className="sec-title">{t('dashboard.redeemTitle')}</div>
         <div className="flex gap-2">
           <input
             className="input-field flex-1"
-            placeholder="Enter invite code…"
+            placeholder={t('dashboard.redeemPh')}
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
             maxLength={6}
             style={{ letterSpacing: inviteCode ? '3px' : undefined }}
           />
           <button className="btn-primary" style={{ width: 'auto', padding: '0 18px' }} onClick={handleRedeemCode}>
-            Join
+            {t('dashboard.joinBtn')}
           </button>
         </div>
         {inviteError && (

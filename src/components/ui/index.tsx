@@ -1,5 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/LanguageContext'
 
 // ── TOPBAR ────────────────────────────────────────────────
 interface TopbarProps {
@@ -53,6 +54,7 @@ interface TabBarProps {
 
 export function TabBar({ active, babyId }: TabBarProps) {
   const router = useRouter()
+  const { t } = useLanguage()
   return (
     <div className="tab-bar">
       <div
@@ -65,7 +67,7 @@ export function TabBar({ active, babyId }: TabBarProps) {
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-        <span className="text-[10px] font-semibold" style={{ color: active === 'home' ? 'var(--accent)' : 'var(--text3)' }}>Home</span>
+        <span className="text-[10px] font-semibold" style={{ color: active === 'home' ? 'var(--accent)' : 'var(--text3)' }}>{t('tabs.home')}</span>
       </div>
       <div
         className="flex-1 flex flex-col items-center gap-1 py-2 cursor-pointer"
@@ -78,7 +80,7 @@ export function TabBar({ active, babyId }: TabBarProps) {
           <path d="M12 2a7 7 0 0 1 7 7c0 4.4-3.5 8-7 8s-7-3.6-7-8a7 7 0 0 1 7-7z"/>
           <path d="M12 19v3M9 21h6"/>
         </svg>
-        <span className="text-[10px] font-semibold" style={{ color: active === 'baby' ? 'var(--accent)' : 'var(--text3)' }}>Baby</span>
+        <span className="text-[10px] font-semibold" style={{ color: active === 'baby' ? 'var(--accent)' : 'var(--text3)' }}>{t('settings.baby')}</span>
       </div>
       <div
         className="flex-1 flex flex-col items-center gap-1 py-2 cursor-pointer"
@@ -90,7 +92,7 @@ export function TabBar({ active, babyId }: TabBarProps) {
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <span className="text-[10px] font-semibold" style={{ color: active === 'settings' ? 'var(--accent)' : 'var(--text3)' }}>Settings</span>
+        <span className="text-[10px] font-semibold" style={{ color: active === 'settings' ? 'var(--accent)' : 'var(--text3)' }}>{t('tabs.settings')}</span>
       </div>
     </div>
   )

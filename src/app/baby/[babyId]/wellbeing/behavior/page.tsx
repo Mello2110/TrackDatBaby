@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getBehaviors, addBehavior, deleteBehavior } from '@/lib/db'
 import { Topbar, EntryTime, EmptyState, Pill } from '@/components/ui'
+import { useLanguage } from '@/lib/LanguageContext'
 import { Timestamp } from 'firebase/firestore'
 import type { BehaviorType } from '@/types'
 
@@ -45,6 +46,7 @@ function ScaleSlider({
 export default function BehaviorPage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [entries, setEntries] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -88,37 +90,37 @@ export default function BehaviorPage() {
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Log behavior" backLabel="Cancel" action={{ label: 'Save', onClick: () => {} }} />
+      <Topbar title={t('baby.wellbeing.logBehavior')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
-          <div className="mb-4"><label className="input-label">Timestamp</label>
+          <div className="mb-4"><label className="input-label">{t('baby.meals.timestamp')}</label>
             <input className="input-field" type="datetime-local" value={timestamp} onChange={(e) => setTimestamp(e.target.value)} /></div>
-          <div className="mb-4"><label className="input-label">Behavior type</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.behaviorType')}</label>
             <select className="input-field" value={behaviorType} onChange={(e) => setBehaviorType(e.target.value as BehaviorType)}>
-              <option value="mood">Mood</option><option value="energy">Energy</option>
-              <option value="social">Social</option><option value="temperament">Temperament</option><option value="other">Other</option>
+              <option value="mood">{t('baby.wellbeing.mood')}</option><option value="energy">{t('baby.wellbeing.energy')}</option>
+              <option value="social">{t('baby.wellbeing.social')}</option><option value="temperament">{t('baby.wellbeing.temperament')}</option><option value="other">{t('baby.meals.other')}</option>
             </select></div>
-          <div className="mb-4"><label className="input-label">Description</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.description')}</label>
             <textarea className="input-field" value={description} onChange={(e) => setDescription(e.target.value)}
-              rows={3} placeholder="Describe the behavior…" required /></div>
+              rows={3} placeholder={t('baby.wellbeing.descriptionPh')} required /></div>
 
-          <ScaleSlider label="Energy level" min_label="Calm" max_label="Hyperactive"
+          <ScaleSlider label={t('baby.wellbeing.energyLevel')} min_label={t('baby.wellbeing.calm')} max_label={t('baby.wellbeing.hyper')}
             value={energyScale} onChange={setEnergyScale} />
-          <ScaleSlider label="Social level" min_label="Shy" max_label="Outgoing"
+          <ScaleSlider label={t('baby.wellbeing.socialLevel')} min_label={t('baby.wellbeing.shy')} max_label={t('baby.wellbeing.outgoing')}
             value={socialScale} onChange={setSocialScale} />
 
-          <div className="mb-4"><label className="input-label">Trigger (optional)</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.trigger')} ({t('common.optional')})</label>
             <input className="input-field" type="text" value={trigger}
-              onChange={(e) => setTrigger(e.target.value)} placeholder="e.g. Missed nap, new environment…" /></div>
-          <div className="mb-4"><label className="input-label">Duration (optional)</label>
+              onChange={(e) => setTrigger(e.target.value)} placeholder={t('baby.wellbeing.triggerPh')} /></div>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.duration')} ({t('common.optional')})</label>
             <input className="input-field" type="text" value={duration}
               onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 30 min" /></div>
-          <div className="mb-4"><label className="input-label">Response (optional)</label>
+          <div className="mb-4"><label className="input-label">{t('baby.wellbeing.response')} ({t('common.optional')})</label>
             <textarea className="input-field" value={response} onChange={(e) => setResponse(e.target.value)}
-              rows={2} placeholder="What helped / what made it worse…" /></div>
-          <div className="mb-5"><label className="input-label">Notes (optional)</label>
-            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Any other notes…" /></div>
-          <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save entry'}</button>
+              rows={2} placeholder={t('baby.wellbeing.responsePh')} /></div>
+          <div className="mb-5"><label className="input-label">{t('onboarding.notes')} ({t('common.optional')})</label>
+            <textarea className="input-field" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('baby.meals.notesPh')} /></div>
+          <button className="btn-primary" type="submit" disabled={saving}>{saving ? t('common.saving') : t('baby.meals.saveEntry')}</button>
         </form>
       </div>
     </div>
@@ -126,40 +128,40 @@ export default function BehaviorPage() {
 
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title="Behavior" backLabel="Back" backHref={`/baby/${babyId}/wellbeing`}
-        action={{ label: '+ Add', onClick: () => setShowForm(true) }} />
+      <Topbar title={t('baby.wellbeing.behavior')} backLabel={t('common.back')} backHref={`/baby/${babyId}/wellbeing`}
+        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }} />
       <div className="scroll-body">
         {latest ? (
           <div className="hi-card mb-3" style={{ background: 'var(--mint-bg)' }}>
-            <div className="text-[11px] mb-1" style={{ color: 'var(--text3)' }}>Latest</div>
-            <div className="text-[15px] font-bold mb-1" style={{ color: 'var(--text)' }}>{latest.behaviorType}</div>
+            <div className="text-[11px] mb-1" style={{ color: 'var(--text3)' }}>{t('baby.meals.latest')}</div>
+            <div className="text-[15px] font-bold mb-1" style={{ color: 'var(--text)' }}>{t(`baby.wellbeing.${latest.behaviorType}`)}</div>
             <div className="text-[13px] mb-2" style={{ color: 'var(--text2)' }}>{latest.description}</div>
             <div className="flex gap-2 flex-wrap">
-              <Pill color="neutral">Energy {latest.energyScale}/10</Pill>
-              <Pill color="neutral">Social {latest.socialScale}/10</Pill>
-              {latest.trigger && <Pill color="mint">Trigger: {latest.trigger}</Pill>}
+              <Pill color="neutral">{t('baby.wellbeing.energy')} {latest.energyScale}/10</Pill>
+              <Pill color="neutral">{t('baby.wellbeing.social')} {latest.socialScale}/10</Pill>
+              {latest.trigger && <Pill color="mint">{t('baby.wellbeing.trigger')}: {latest.trigger}</Pill>}
             </div>
           </div>
-        ) : <EmptyState message={'No behavior logged yet.\nTap + Add to get started.'} />}
+        ) : <EmptyState message={t('baby.wellbeing.behaviorSub')} />}
 
         {entries.length > 0 && (
           <>
-            <div className="sec-title mt-4">All entries</div>
+            <div className="sec-title mt-4">{t('baby.meals.allEntries')}</div>
             {entries.map((e) => (
               <div key={e.id} className="entry-card">
                 <EntryTime ts={e.timestamp} />
                 <div className="flex justify-between items-start">
                   <div className="flex-1 pr-3">
                     <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                      {e.behaviorType} · Energy {e.energyScale}/10 · Social {e.socialScale}/10
+                      {t(`baby.wellbeing.${e.behaviorType}`)} · {t('baby.wellbeing.energy')} {e.energyScale}/10 · {t('baby.wellbeing.social')} {e.socialScale}/10
                     </div>
                     <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text2)' }}>{e.description}</div>
-                    {e.trigger && <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>Trigger: {e.trigger}</div>}
+                    {e.trigger && <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>{t('baby.wellbeing.trigger')}: {e.trigger}</div>}
                   </div>
                   <button onClick={async () => { await deleteBehavior(babyId, e.id); load() }}
                     className="text-[11px] px-2 py-1 rounded flex-shrink-0"
                     style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
-                    Delete
+                    {t('baby.meals.delete')}
                   </button>
                 </div>
               </div>
