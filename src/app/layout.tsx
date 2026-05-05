@@ -5,8 +5,16 @@ import { ThemeProvider } from '@/lib/ThemeContext'
 import { LanguageProvider } from '@/lib/LanguageContext'
 
 export const metadata: Metadata = {
-  title: 'BabyTrack',
+  title: 'TrackDatBaby',
   description: 'Every little moment, remembered.',
+  manifest: '/manifest.json',
+  themeColor: '#A85C28',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+  appleWebApp: {
+    capable: true,
+    title: 'TrackBaby',
+    statusBarStyle: 'default',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

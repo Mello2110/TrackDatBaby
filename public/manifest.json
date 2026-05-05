@@ -1,0 +1,16 @@
+{
+  "name": "TrackDatBaby",
+  "short_name": "TrackBaby",
+  "description": "Every little moment, remembered.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F0E8",
+  "theme_color": "#A85C28",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
