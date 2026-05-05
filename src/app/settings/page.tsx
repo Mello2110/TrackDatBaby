@@ -37,6 +37,7 @@ export default function SettingsPage() {
       notifications: { feeding, medication, push },
     })
     await refreshUserData()
+    router.push('/dashboard')
   }
 
   async function handleLogout() {

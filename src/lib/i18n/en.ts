@@ -106,6 +106,7 @@ export const en = {
     account: 'Account',
     signOut: 'Sign out',
     deleteAccount: 'Delete account',
+    languageSaved: 'Language saved!',
   },
   tabs: {
     home: 'Home',
@@ -130,8 +131,10 @@ export const en = {
       profile: 'Profile',
       months: 'months',
       years: 'years',
+      weeks: 'weeks',
       mo: 'mo',
       yr: 'yr',
+      wk: 'wk',
     },
     profile: {
       title: 'Baby profile',
@@ -281,7 +284,7 @@ export const en = {
       deleteWarning: 'This permanently deletes your account. Baby profiles remain.',
       yesDelete: 'Yes, delete',
     },
-  }
+  },
 }
 
 export type AppTranslation = typeof en

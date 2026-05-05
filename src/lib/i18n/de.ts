@@ -108,12 +108,13 @@ export const de: AppTranslation = {
     account: 'Account',
     signOut: 'Abmelden',
     deleteAccount: 'Account löschen',
+    languageSaved: 'Sprache gespeichert!',
   },
   tabs: {
     home: 'Home',
     add: 'Hinzufügen',
     stats: 'Stats',
-    settings: 'Settings', // Settings in tab bar usually keeps the original naming or "Einstell."
+    settings: 'Settings',
   },
   baby: {
     dashboard: {
@@ -132,8 +133,10 @@ export const de: AppTranslation = {
       profile: 'Profil',
       months: 'Monate',
       years: 'Jahre',
+      weeks: 'Wochen',
       mo: 'Mon.',
       yr: 'J.',
+      wk: 'Wo.',
     },
     profile: {
       title: 'Baby Profil',
@@ -283,5 +286,5 @@ export const de: AppTranslation = {
       deleteWarning: 'Dies löscht deinen Account permanent. Baby-Profile bleiben bestehen.',
       yesDelete: 'Ja, löschen',
     },
-  }
+  },
 }

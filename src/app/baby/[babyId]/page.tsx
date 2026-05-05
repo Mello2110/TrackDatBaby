@@ -50,16 +50,23 @@ export default function BabyPage() {
     })
   }, [babyId])
 
-  function getAgeInMonths(dob: string) {
+  function getAgeDisplay(dob: string) {
     const birth = new Date(dob)
     const now = new Date()
-    return (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth()
+    const diffMs = now.getTime() - birth.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const weeks = Math.floor(diffDays / 7)
+    const months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth()
+
+    if (months < 12) {
+      return `${weeks} ${t('baby.dashboard.wk')}`
+    }
+    return months < 24 ? `${months} ${t('baby.dashboard.mo')}` : `${Math.floor(months / 12)} ${t('baby.dashboard.yr')}`
   }
 
   if (!baby) return <div className="page-bg flex items-center justify-center min-h-screen"><p style={{ color: 'var(--text3)' }}>{t('common.loading')}</p></div>
 
-  const ageMonths = getAgeInMonths(baby.dob)
-  const ageLabel = ageMonths < 24 ? `${ageMonths} ${t('baby.dashboard.mo')}` : `${Math.floor(ageMonths / 12)} ${t('baby.dashboard.yr')}`
+  const ageLabel = getAgeDisplay(baby.dob)
 
   const CATS = getCats(t)
 

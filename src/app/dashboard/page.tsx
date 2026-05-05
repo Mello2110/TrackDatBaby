@@ -51,9 +51,15 @@ export default function DashboardPage() {
   function getAgeLabel(dob: string) {
     const birth = new Date(dob)
     const now = new Date()
+    const diffMs = now.getTime() - birth.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const weeks = Math.floor(diffDays / 7)
     const months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth()
-    if (months < 24) return `${months} months`
-    return `${Math.floor(months / 12)} years`
+
+    if (months < 12) {
+      return `${weeks} ${t('baby.dashboard.wk')}`
+    }
+    return months < 24 ? `${months} ${t('baby.dashboard.mo')}` : `${Math.floor(months / 12)} ${t('baby.dashboard.yr')}`
   }
 
   return (
