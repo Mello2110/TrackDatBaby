@@ -181,6 +181,13 @@ export async function redeemInviteCode(
   if (caregivers.find((c) => c.userId === currentUserId))
     throw new Error('You are already linked to this baby.')
 
+  // Role matching check
+  const userProfile = await getUser(currentUserId)
+  const userRole = userProfile?.profile?.role || 'other'
+  if (data.role !== 'other' && data.role !== userRole) {
+    throw new Error(`This invite code is for a ${data.role}, but your profile says ${userRole}. Please update your profile or ask for a new code.`)
+  }
+
   await updateDoc(babyRef, {
     caregivers: arrayUnion({
       userId: currentUserId,

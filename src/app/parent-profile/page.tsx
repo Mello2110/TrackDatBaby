@@ -7,6 +7,16 @@ import { deleteUser } from 'firebase/auth'
 import { Topbar, InputGroup, SelectGroup } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 
+const getRoles = (t: any) => [
+  { value: 'mother', label: t('baby.caregivers.mother') },
+  { value: 'father', label: t('baby.caregivers.father') },
+  { value: 'grandma', label: t('baby.caregivers.grandma') },
+  { value: 'grandad', label: t('baby.caregivers.grandad') },
+  { value: 'aunt', label: t('baby.caregivers.aunt') },
+  { value: 'uncle', label: t('baby.caregivers.uncle') },
+  { value: 'other', label: t('baby.meals.other') },
+]
+
 const getBloodOptions = (t: any) => [
   { value: '', label: t('baby.parentProfile.bloodUnknown') },
   { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
@@ -26,6 +36,7 @@ export default function ParentProfilePage() {
 
   const [name, setName] = useState('')
   const [dob, setDob] = useState('')
+  const [role, setRole] = useState<string>('other')
   const [bloodType, setBloodType] = useState('')
   const [familyDiseases, setFamilyDiseases] = useState('')
   const [personalDiseases, setPersonalDiseases] = useState('')
@@ -36,6 +47,7 @@ export default function ParentProfilePage() {
     if (p) {
       setName(p.name || '')
       setDob(p.dob || '')
+      setRole(p.role || 'other')
       setBloodType(p.bloodType || '')
       setFamilyDiseases(p.familyDiseases || '')
       setPersonalDiseases(p.personalDiseases || '')
@@ -47,7 +59,7 @@ export default function ParentProfilePage() {
     if (!user) return
     setSaving(true); setError(''); setSaved(false)
     try {
-      await updateUserProfile(user.uid, { name, dob, bloodType, familyDiseases, personalDiseases, notes } as any)
+      await updateUserProfile(user.uid, { name, dob, role, bloodType, familyDiseases, personalDiseases, notes } as any)
       await refreshUserData()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -83,6 +95,7 @@ export default function ParentProfilePage() {
 
         <InputGroup label={t('baby.parentProfile.fullName')} value={name} onChange={setName} placeholder={t('baby.parentProfile.fullNamePh')} required />
         <InputGroup label={t('baby.parentProfile.dob')} type="date" value={dob} onChange={setDob} />
+        <SelectGroup label={t('baby.caregivers.role')} value={role} onChange={setRole} options={getRoles(t)} />
         <SelectGroup label={t('baby.parentProfile.bloodType')} value={bloodType} onChange={setBloodType} options={getBloodOptions(t)} />
         <InputGroup label={t('baby.parentProfile.familyHistory')} value={familyDiseases} onChange={setFamilyDiseases}
           placeholder={t('baby.parentProfile.familyHistoryPh')} textarea rows={3} />
