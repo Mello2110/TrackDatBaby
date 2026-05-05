@@ -323,6 +323,16 @@ function OnboardingContent() {
           <button className="btn-primary" type="submit" disabled={saving}>
             {saving ? 'Creating…' : startStep === 2 ? 'Add baby' : 'Create profile & finish'}
           </button>
+
+          {startStep !== 2 && (
+            <button
+              type="button"
+              className="btn-ghost mt-3"
+              onClick={() => router.push('/dashboard')}
+            >
+              I have an invite code (Skip)
+            </button>
+          )}
         </form>
       </div>
     </div>
