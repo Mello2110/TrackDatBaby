@@ -1,0 +1,127 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/AuthContext'
+import { updateUserProfile } from '@/lib/db'
+import { deleteUser } from 'firebase/auth'
+import { Topbar, InputGroup, SelectGroup } from '@/components/ui'
+
+const BLOOD_OPTIONS = [
+  { value: '', label: 'Unknown' },
+  { value: 'A+', label: 'A+' }, { value: 'A-', label: 'A−' },
+  { value: 'B+', label: 'B+' }, { value: 'B-', label: 'B−' },
+  { value: 'AB+', label: 'AB+' }, { value: 'AB-', label: 'AB−' },
+  { value: 'O+', label: 'O+' }, { value: 'O-', label: 'O−' },
+]
+
+export default function ParentProfilePage() {
+  const router = useRouter()
+  const { user, userData, refreshUserData } = useAuth()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const [name, setName] = useState('')
+  const [dob, setDob] = useState('')
+  const [bloodType, setBloodType] = useState('')
+  const [familyDiseases, setFamilyDiseases] = useState('')
+  const [personalDiseases, setPersonalDiseases] = useState('')
+  const [notes, setNotes] = useState('')
+
+  useEffect(() => {
+    const p = userData?.profile
+    if (p) {
+      setName(p.name || '')
+      setDob(p.dob || '')
+      setBloodType(p.bloodType || '')
+      setFamilyDiseases(p.familyDiseases || '')
+      setPersonalDiseases(p.personalDiseases || '')
+      setNotes(p.notes || '')
+    }
+  }, [userData])
+
+  async function handleSave() {
+    if (!user) return
+    setSaving(true); setError(''); setSaved(false)
+    try {
+      await updateUserProfile(user.uid, { name, dob, bloodType, familyDiseases, personalDiseases, notes } as any)
+      await refreshUserData()
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err: any) { setError(err.message) }
+    finally { setSaving(false) }
+  }
+
+  async function handleDeleteAccount() {
+    if (!user) return
+    try {
+      await deleteUser(user)
+      router.replace('/login')
+    } catch (err: any) { setError(err.message); setShowDeleteConfirm(false) }
+  }
+
+  return (
+    <div className="page-bg flex flex-col min-h-screen">
+      <Topbar
+        title="Your profile"
+        backLabel="Back"
+        backHref="/dashboard"
+        action={{ label: saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save', onClick: handleSave }}
+      />
+      <div className="scroll-body">
+        <div className="flex justify-center mb-6">
+          <div
+            className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-[28px] font-bold"
+            style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)', border: '2px solid var(--border2)' }}
+          >
+            {name ? name.charAt(0).toUpperCase() : '?'}
+          </div>
+        </div>
+
+        <InputGroup label="Full name" value={name} onChange={setName} placeholder="Your name" required />
+        <InputGroup label="Date of birth" type="date" value={dob} onChange={setDob} />
+        <SelectGroup label="Blood type" value={bloodType} onChange={setBloodType} options={BLOOD_OPTIONS} />
+        <InputGroup label="Family medical history" value={familyDiseases} onChange={setFamilyDiseases}
+          placeholder="e.g. Diabetes, heart disease…" textarea rows={3} />
+        <InputGroup label="Personal medical history" value={personalDiseases} onChange={setPersonalDiseases}
+          placeholder="e.g. Asthma, allergies…" textarea rows={3} />
+        <InputGroup label="Notes" value={notes} onChange={setNotes} placeholder="Anything else…" textarea rows={3} />
+
+        {error && <p className="text-sm mb-4" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <button className="btn-primary mb-4" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save profile'}
+        </button>
+
+        <div className="divider my-6" />
+        <div className="sec-title">Danger zone</div>
+        {!showDeleteConfirm ? (
+          <button
+            className="btn-outline"
+            style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Delete account
+          </button>
+        ) : (
+          <div className="rounded-[14px] p-4" style={{ background: 'var(--rose-bg)', border: '2px solid var(--danger)' }}>
+            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--danger)' }}>Are you sure?</p>
+            <p className="text-[13px] mb-4" style={{ color: 'var(--text2)' }}>
+              This permanently deletes your account. Baby profiles remain.
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 py-[12px] rounded-[10px] text-[14px] font-semibold"
+                style={{ background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer' }}
+                onClick={handleDeleteAccount}
+              >
+                Yes, delete
+              </button>
+              <button className="flex-1 btn-ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

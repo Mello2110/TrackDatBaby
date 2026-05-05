@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function getCaregivers(babyId) {
+      return get(/databases/$(database)/documents/babies/$(babyId)).data.caregivers;
+    }
+
+    function isCaregiver(babyId) {
+      let caregivers = getCaregivers(babyId);
+      return isAuth() && caregivers.hasAny([{'userId': request.auth.uid}]);
+    }
+
+    function hasFullAccess(babyId) {
+      let caregivers = getCaregivers(babyId);
+      return isAuth() && caregivers.hasAny([
+        {'userId': request.auth.uid, 'accessLevel': 'full'}
+      ]);
+    }
+
+    // Users can only access their own document
+    match /users/{userId} {
+      allow read, write: if isAuth() && request.auth.uid == userId;
+    }
+
+    // Babies
+    match /babies/{babyId} {
+      allow read: if isCaregiver(babyId);
+      allow create: if isAuth();
+      allow update: if hasFullAccess(babyId);
+      allow delete: if hasFullAccess(babyId);
+
+      match /meals/{entryId} {
+        allow read, write: if isCaregiver(babyId);
+      }
+      match /illness/{entryId} {
+        allow read, write: if isCaregiver(babyId);
+      }
+      match /development/{entryId} {
+        allow read, write: if isCaregiver(babyId);
+      }
+      match /behavior/{entryId} {
+        allow read, write: if isCaregiver(babyId);
+      }
+      match /stats/{entryId} {
+        allow read, write: if isCaregiver(babyId);
+      }
+    }
+
+    // Invite codes — any authenticated user can read/create/delete
+    match /inviteCodes/{code} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow delete: if isAuth();
+    }
+  }
+}

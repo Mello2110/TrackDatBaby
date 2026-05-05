@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══ LIGHT THEME (default) ══ */
+:root,
+[data-theme='light'] {
+  --bg: #DDD7CC;
+  --bg2: #D0C9BC;
+  --surface: #F5F0E8;
+  --surface2: #EDE7DC;
+  --border: rgba(90, 70, 40, 0.25);
+  --border2: rgba(90, 70, 40, 0.40);
+  --text: #1E1610;
+  --text2: #5C4A32;
+  --text3: #9A8060;
+  --accent: #A85C28;
+  --accent-bg: #F0E0CC;
+  --accent-text: #6A2E08;
+  --mint: #2E6E50;
+  --mint-bg: #C8E8D8;
+  --mint-text: #0E3E28;
+  --rose: #A83838;
+  --rose-bg: #EED0D0;
+  --rose-text: #681818;
+  --blue: #2A5888;
+  --blue-bg: #CCE0F0;
+  --blue-text: #0E2E50;
+  --lav: #5840A0;
+  --lav-bg: #DDD8F0;
+  --lav-text: #280E68;
+  --danger: #A83838;
+}
+
+/* ══ DARK THEME ══ */
+[data-theme='dark'] {
+  --bg: #12100C;
+  --bg2: #1A1710;
+  --surface: #282018;
+  --surface2: #342A1E;
+  --border: rgba(255, 210, 150, 0.18);
+  --border2: rgba(255, 210, 150, 0.32);
+  --text: #F0E6D4;
+  --text2: #B89868;
+  --text3: #705840;
+  --accent: #D08848;
+  --accent-bg: #381E08;
+  --accent-text: #F0C080;
+  --mint: #48A880;
+  --mint-bg: #082818;
+  --mint-text: #88D8B0;
+  --rose: #C87070;
+  --rose-bg: #280808;
+  --rose-text: #F0A8A8;
+  --blue: #5888C0;
+  --blue-bg: #081828;
+  --blue-text: #98C8F0;
+  --lav: #8878C8;
+  --lav-bg: #100C28;
+  --lav-text: #C0B0F8;
+  --danger: #C87070;
+}
+
+/* ══ BABY THEME ══ */
+[data-theme='baby'] {
+  --bg: #EDD8E4;
+  --bg2: #E0C8D8;
+  --surface: #FDF6FA;
+  --surface2: #F5E8F2;
+  --border: rgba(160, 80, 110, 0.25);
+  --border2: rgba(160, 80, 110, 0.42);
+  --text: #280E1A;
+  --text2: #784058;
+  --text3: #B07888;
+  --accent: #B83860;
+  --accent-bg: #F5D0DC;
+  --accent-text: #680820;
+  --mint: #286848;
+  --mint-bg: #C0E8D0;
+  --mint-text: #083820;
+  --rose: #B03050;
+  --rose-bg: #F5CCD8;
+  --rose-text: #680818;
+  --blue: #305888;
+  --blue-bg: #C8D8F0;
+  --blue-text: #081830;
+  --lav: #6848A8;
+  --lav-bg: #DDD0F0;
+  --lav-text: #280868;
+  --danger: #B03050;
+}
+
+/* ══ BASE STYLES ══ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  transition: background-color 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══ REUSABLE COMPONENT CLASSES ══ */
+@layer components {
+  /* Page wrapper */
+  .page-bg {
+    @apply min-h-screen;
+    background: var(--bg);
+  }
+
+  /* Topbar */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border2);
+    @apply sticky top-0 z-10 flex items-center justify-between px-[18px] py-[14px];
+  }
+
+  /* Scroll body */
+  .scroll-body {
+    background: var(--bg);
+    @apply flex-1 overflow-y-auto px-[18px] pt-[18px] pb-24;
+  }
+
+  /* Inputs */
+  .input-field {
+    background: var(--surface);
+    color: var(--text);
+    border: 2px solid var(--border2);
+    @apply w-full rounded-[10px] px-[13px] py-3 text-sm font-sans outline-none transition-colors;
+  }
+  .input-field:focus {
+    border-color: var(--accent);
+  }
+
+  /* Label */
+  .input-label {
+    color: var(--text3);
+    @apply block text-[11px] font-bold uppercase tracking-wider mb-[5px];
+  }
+
+  /* Primary button */
+  .btn-primary {
+    background: var(--accent);
+    @apply block w-full rounded-[10px] py-[14px] text-center text-[15px] font-semibold text-white border-none cursor-pointer transition-opacity;
+  }
+  .btn-primary:active {
+    opacity: 0.82;
+  }
+
+  /* Ghost button — always visible via border */
+  .btn-ghost {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    color: var(--text);
+    @apply block w-full rounded-[10px] py-[14px] text-center text-[15px] font-medium cursor-pointer transition-opacity;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    @apply block w-full rounded-[10px] py-[14px] text-center text-[15px] font-semibold cursor-pointer;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    @apply rounded-[14px] p-4 mb-3 cursor-pointer;
+  }
+
+  /* Entry card */
+  .entry-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    @apply rounded-[10px] px-[14px] py-[13px] mb-[9px];
+  }
+
+  /* Highlight card (latest entry banner) */
+  .hi-card {
+    border: 2px solid var(--border2);
+    @apply rounded-[14px] p-4 mb-3;
+  }
+
+  /* Section title */
+  .sec-title {
+    color: var(--text3);
+    @apply text-[11px] font-bold uppercase tracking-[0.07em] mb-[10px] mt-1;
+  }
+
+  /* Category button */
+  .cat-btn {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    @apply rounded-[14px] p-[18px] cursor-pointer;
+  }
+
+  /* Sub button (well-being list) */
+  .sub-btn {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    @apply rounded-[14px] px-[14px] py-[15px] cursor-pointer mb-[10px] flex items-center gap-[13px];
+  }
+
+  /* Stat chip */
+  .stat-chip {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    @apply rounded-[10px] px-[14px] py-[13px] flex justify-between items-center cursor-pointer mb-[9px];
+  }
+
+  /* Pill badge */
+  .pill {
+    @apply inline-flex items-center px-[9px] py-[3px] rounded-full text-[11px] font-semibold;
+  }
+
+  /* Social auth button */
+  .social-btn {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    color: var(--text);
+    @apply flex items-center justify-center gap-[10px] w-full rounded-[10px] py-[13px] text-sm font-semibold cursor-pointer mb-[10px];
+  }
+
+  /* Toggle switch */
+  .toggle-track {
+    background: var(--border2);
+    @apply w-[42px] h-6 rounded-full relative cursor-pointer transition-colors;
+  }
+  .toggle-track.active {
+    background: var(--accent);
+  }
+  .toggle-thumb {
+    @apply absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full transition-all shadow-sm;
+  }
+  .toggle-track.active .toggle-thumb {
+    @apply left-[21px];
+  }
+
+  /* Avatar */
+  .avatar {
+    @apply w-[42px] h-[42px] rounded-full flex items-center justify-center text-[15px] font-bold flex-shrink-0;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    background: var(--surface);
+    border-top: 2px solid var(--border2);
+    @apply fixed bottom-0 left-0 right-0 flex pb-[18px] pt-2 z-20;
+  }
+
+  /* Divider */
+  .divider {
+    background: var(--border2);
+    @apply h-[2px] my-4;
+  }
+
+  /* Invite code box */
+  .invite-box {
+    background: var(--accent-bg);
+    border: 2px dashed var(--accent);
+    @apply rounded-[10px] p-[22px] text-center;
+  }
+
+  /* Severity dot */
+  .sev-dot {
+    background: var(--surface);
+    border: 2px solid var(--border2);
+    color: var(--text3);
+    @apply w-7 h-7 rounded-[7px] cursor-pointer flex items-center justify-center text-[11px] font-bold;
+  }
+  .sev-dot.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    @apply text-white;
+  }
+}
