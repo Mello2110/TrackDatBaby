@@ -20,7 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <div className="app-frame">
+              {children}
+            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>
