@@ -9,7 +9,7 @@ import {
   browserSessionPersistence,
   User,
 } from 'firebase/auth'
-import { auth, googleProvider, appleProvider } from './firebase'
+import { auth, googleProvider } from './firebase'
 import { createUser, getUser } from './db'
 
 export async function signUpWithEmail(
@@ -52,17 +52,6 @@ export async function signInWithGoogle() {
   return cred.user
 }
 
-export async function signInWithApple() {
-  const cred = await signInWithPopup(auth, appleProvider)
-  const existing = await getUser(cred.user.uid)
-  if (!existing) {
-    await createUser(cred.user.uid, {
-      uid: cred.user.uid,
-      name: cred.user.displayName || '',
-    })
-  }
-  return cred.user
-}
 
 export async function logOut() {
   await signOut(auth)

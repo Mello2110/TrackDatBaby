@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signUpWithEmail, signInWithGoogle, signInWithApple } from '@/lib/auth'
+import { signUpWithEmail, signInWithGoogle } from '@/lib/auth'
 import { useLanguage } from '@/lib/LanguageContext'
 
 export default function RegisterPage() {

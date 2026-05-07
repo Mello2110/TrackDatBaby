@@ -24,8 +24,5 @@ export const db = getFirestore(app)
 
 // Auth providers
 export const googleProvider = new GoogleAuthProvider()
-export const appleProvider = new OAuthProvider('apple.com')
-appleProvider.addScope('email')
-appleProvider.addScope('name')
 
 export default app
