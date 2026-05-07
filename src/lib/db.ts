@@ -96,7 +96,7 @@ export async function getUserBabies(uid: string): Promise<BabyProfile[]> {
 
 export async function createBaby(
   uid: string,
-  profile: Omit<BabyProfile, 'id' | 'caregivers' | 'createdAt' | 'createdBy'>
+  profile: Omit<BabyProfile, 'id' | 'caregivers' | 'createdAt' | 'createdBy' | 'alarms'>
 ) {
   const encrypted = { ...profile }
   if (encrypted.name) encrypted.name = encryptName(encrypted.name)
