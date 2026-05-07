@@ -10,6 +10,7 @@ export interface UserProfile {
   familyDiseases: string
   personalDiseases: string
   notes: string
+  role: CaregiverRole
   createdAt: Date
 }
 
