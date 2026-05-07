@@ -84,3 +84,31 @@ export function parseLocalToUTC(localStr: string, timezone: string = 'Europe/Ber
   const diff = tzDate.getTime() - date.getTime()
   return new Date(date.getTime() - diff)
 }
+
+/**
+ * Simple reversible obfuscation for "name protection" in the database.
+ * In a production app, this would use proper crypto (e.g. AES-GCM) with shared keys.
+ */
+const SECRET_KEY = 'babytrack-safe-key'
+
+export function encryptName(name: string): string {
+  if (!name) return ''
+  // Simple XOR-like obfuscation + prefix to identify encrypted data
+  const chars = Array.from(name).map((char, i) => 
+    String.fromCharCode(char.charCodeAt(0) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length))
+  ).join('')
+  return 'ENC:' + btoa(unescape(encodeURIComponent(chars)))
+}
+
+export function decryptName(encrypted: string): string {
+  if (!encrypted || !encrypted.startsWith('ENC:')) return encrypted || ''
+  try {
+    const base64 = encrypted.slice(4)
+    const chars = decodeURIComponent(escape(atob(base64)))
+    return Array.from(chars).map((char, i) => 
+      String.fromCharCode(char.charCodeAt(0) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length))
+    ).join('')
+  } catch (e) {
+    return encrypted // Fallback to original if decryption fails
+  }
+}

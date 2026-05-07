@@ -84,8 +84,8 @@ export default function BabyPage() {
         <div className="grid grid-cols-3 gap-2 mb-5">
           {[
             { label: t('baby.dashboard.age'), value: ageLabel, bg: '--rose-bg' },
-            { label: t('baby.dashboard.weight'), value: latestWeight ? `${latestWeight.value} kg` : '—', bg: '--mint-bg' },
-            { label: t('baby.dashboard.height'), value: latestHeight ? `${latestHeight.value} cm` : '—', bg: '--blue-bg' },
+            { label: t('baby.dashboard.weight'), value: latestWeight ? `${latestWeight.value} kg` : (baby.birthWeight ? `${baby.birthWeight}` : '—'), bg: '--mint-bg' },
+            { label: t('baby.dashboard.height'), value: latestHeight ? `${latestHeight.value} cm` : (baby.birthHeight ? `${baby.birthHeight}` : '—'), bg: '--blue-bg' },
           ].map((s) => (
             <div key={s.label} className="rounded-[10px] p-3 text-center"
               style={{ background: `var(${s.bg})`, border: '2px solid var(--border2)' }}>

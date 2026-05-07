@@ -86,6 +86,8 @@ export const en = {
     redeemTitle: 'Redeem invite',
     redeemPh: 'Enter invite code…',
     joinBtn: 'Join',
+    alarms: 'Wecker',
+    manageAlarms: 'Set times for meals & medication',
   },
   settings: {
     title: 'Settings',
@@ -96,6 +98,8 @@ export const en = {
     preferences: 'Preferences',
     keepSignedIn: 'Keep me signed in',
     language: 'Language',
+    alarms: 'Alarms',
+    manageAlarms: 'Set times for meals & medication',
     reminders: 'Reminders',
     feedingReminders: 'Feeding reminders',
     medicationReminders: 'Medication reminders',
@@ -117,6 +121,7 @@ export const en = {
   },
   baby: {
     dashboard: {
+      alarms: 'Alarms',
       meals: 'Meals',
       mealsSub: 'Track feeding',
       wellbeing: 'Well-being',

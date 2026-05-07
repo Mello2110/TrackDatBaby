@@ -18,7 +18,7 @@ export interface UserSettings {
   rememberMe: boolean
   language: string
   timezone: string
-  alarms: Alarm[]
+  enabledAlarms: string[] // IDs of alarms that are active for this user
   notifications: NotificationSettings
 }
 
@@ -27,7 +27,6 @@ export interface Alarm {
   type: 'feeding' | 'medication' | 'custom'
   label: string
   time: string
-  enabled: boolean
   babyId?: string
 }
 
@@ -72,6 +71,7 @@ export interface BabyProfile {
   vaccinations: string
   notes: string
   caregivers: Caregiver[]
+  alarms: Alarm[] // Shared alarms for this baby
   createdAt: Date
   createdBy: string
 }

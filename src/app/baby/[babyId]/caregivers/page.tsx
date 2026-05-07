@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getBaby, generateInviteCode } from '@/lib/db'
-import { hasFullAccess } from '@/lib/db'
+import { getBaby, generateInviteCode, getUser, hasFullAccess } from '@/lib/db'
 import { Topbar, Pill } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { BabyProfile, CaregiverRole, AccessLevel } from '@/types'
@@ -23,6 +22,7 @@ export default function CaregiversPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
   const [baby, setBaby] = useState<BabyProfile | null>(null)
+  const [caregiverProfiles, setCaregiverProfiles] = useState<Record<string, any>>({})
   const [showInvite, setShowInvite] = useState(false)
   const [role, setRole] = useState<CaregiverRole>('grandma')
   const [customName, setCustomName] = useState('')
@@ -32,7 +32,22 @@ export default function CaregiversPage() {
 
   const ROLES = getRoles(t)
 
-  useEffect(() => { getBaby(babyId).then(setBaby) }, [babyId])
+  useEffect(() => {
+    async function load() {
+      const b = await getBaby(babyId)
+      if (!b) return
+      setBaby(b)
+      
+      // Fetch names for all caregivers
+      const profiles: Record<string, any> = {}
+      await Promise.all(b.caregivers.map(async (c) => {
+        const u = await getUser(c.userId)
+        if (u) profiles[c.userId] = u.profile
+      }))
+      setCaregiverProfiles(profiles)
+    }
+    load()
+  }, [babyId])
 
   const canInvite = baby && user ? hasFullAccess(baby, user.uid) : false
 
@@ -56,26 +71,31 @@ export default function CaregiversPage() {
         action={canInvite ? { label: t('baby.caregivers.invite'), onClick: () => setShowInvite(!showInvite) } : undefined} />
       <div className="scroll-body">
         {/* Caregiver list */}
-        {baby?.caregivers.map((c) => (
-          <div key={c.userId} className="flex items-center gap-3 py-[13px]"
-            style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="avatar" style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)', fontSize: 15 }}>
-              {c.userId === user?.uid ? (user?.email?.charAt(0).toUpperCase() || 'U') : '?'}
-            </div>
-            <div className="flex-1">
-              <div className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>
-                {c.userId === user?.uid ? t('baby.caregivers.you') : `User ${c.userId.slice(0, 6)}`}
-                {c.customRoleName ? ` (${c.customRoleName})` : ''}
+        {baby?.caregivers.map((c) => {
+          const profile = caregiverProfiles[c.userId]
+          const name = profile?.name || (c.userId === user?.uid ? t('baby.caregivers.you') : `User ${c.userId.slice(0, 4)}`)
+          
+          return (
+            <div key={c.userId} className="flex items-center gap-3 py-[13px]"
+              style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="avatar" style={{ background: 'var(--accent-bg)', color: 'var(--accent-text)', fontSize: 15 }}>
+                {name.charAt(0).toUpperCase()}
               </div>
-              <div className="text-[12px] mt-[1px]" style={{ color: 'var(--text3)' }}>
-                {ROLES.find((r) => r.value === c.role)?.label || c.role}
+              <div className="flex-1">
+                <div className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>
+                  {name}
+                  {c.customRoleName ? ` (${c.customRoleName})` : ''}
+                </div>
+                <div className="text-[12px] mt-[1px]" style={{ color: 'var(--text3)' }}>
+                  {ROLES.find((r) => r.value === c.role)?.label || c.role}
+                </div>
               </div>
+              <Pill color={pillColor(c.accessLevel)}>
+                {c.accessLevel === 'full' ? t('baby.caregivers.fullAccess') : t('baby.caregivers.caregiver')}
+              </Pill>
             </div>
-            <Pill color={pillColor(c.accessLevel)}>
-              {c.accessLevel === 'full' ? t('baby.caregivers.fullAccess') : t('baby.caregivers.caregiver')}
-            </Pill>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Invite section */}
         {canInvite && showInvite && (

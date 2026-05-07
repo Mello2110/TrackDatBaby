@@ -88,6 +88,8 @@ export const de: AppTranslation = {
     redeemTitle: 'Code einlösen',
     redeemPh: 'Invite-Code eingeben…',
     joinBtn: 'Beitreten',
+    alarms: 'Wecker',
+    manageAlarms: 'Zeiten für Essen & Medikamente',
   },
   settings: {
     title: 'Einstellungen',
@@ -119,6 +121,8 @@ export const de: AppTranslation = {
   },
   baby: {
     dashboard: {
+      alarms: 'Wecker',
+      manageAlarms: 'Zeiten für Essen & Medikamente',
       meals: 'Mahlzeiten',
       mealsSub: 'Fütterung loggen',
       wellbeing: 'Wohlbefinden',

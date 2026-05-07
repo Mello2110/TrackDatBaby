@@ -4,6 +4,7 @@ import {
   arrayUnion, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { encryptName, decryptName } from './utils'
 import type {
   UserProfile, UserSettings, BabyProfile, Caregiver,
   MealEntry, IllnessEntry, DevelopmentEntry, BehaviorEntry,
@@ -13,18 +14,27 @@ import type {
 // ── USER ──────────────────────────────────────────────────
 export async function getUser(uid: string) {
   const snap = await getDoc(doc(db, 'users', uid))
-  return snap.exists() ? snap.data() : null
+  if (!snap.exists()) return null
+  const data = snap.data()
+  if (data.profile?.name) {
+    data.profile.name = decryptName(data.profile.name)
+  }
+  return data
 }
 
 export async function createUser(uid: string, profile: Partial<UserProfile>) {
+  const encryptedProfile = { ...profile, uid }
+  if (encryptedProfile.name) {
+    encryptedProfile.name = encryptName(encryptedProfile.name)
+  }
   await setDoc(doc(db, 'users', uid), {
-    profile: { ...profile, uid },
+    profile: encryptedProfile,
     settings: {
       theme: 'light',
       rememberMe: true,
       language: 'en',
       timezone: 'Europe/Berlin',
-      alarms: [],
+      enabledAlarms: [], // Changed from alarms array to enabled IDs
       notifications: { feeding: true, medication: false, push: true },
     },
     linkedBabies: [],
@@ -33,7 +43,25 @@ export async function createUser(uid: string, profile: Partial<UserProfile>) {
 }
 
 export async function updateUserProfile(uid: string, profile: Partial<UserProfile>) {
-  await updateDoc(doc(db, 'users', uid), { profile })
+  const encrypted = { ...profile }
+  if (encrypted.name) encrypted.name = encryptName(encrypted.name)
+  await updateDoc(doc(db, 'users', uid), { profile: encrypted })
+
+  // Global Role Sync: Update all linked babies where this user is a caregiver
+  const userData = await getUser(uid)
+  if (userData?.linkedBabies && profile.role) {
+    await Promise.all(userData.linkedBabies.map(async (babyId: string) => {
+      const babyRef = doc(db, 'babies', babyId)
+      const babySnap = await getDoc(babyRef)
+      if (babySnap.exists()) {
+        const caregivers = babySnap.data().caregivers || []
+        const updated = caregivers.map((c: any) => 
+          c.userId === uid ? { ...c, role: profile.role } : c
+        )
+        await updateDoc(babyRef, { caregivers: updated })
+      }
+    }))
+  }
 }
 
 export async function updateUserSettings(uid: string, settings: Partial<UserSettings>) {
@@ -45,6 +73,8 @@ export async function getBaby(babyId: string) {
   const snap = await getDoc(doc(db, 'babies', babyId))
   if (!snap.exists()) return null
   const data = snap.data()
+  
+  if (data.name) data.name = decryptName(data.name)
   
   // Auto-migrate: Add caregiverIds if missing
   if (!data.caregiverIds && data.caregivers) {
@@ -68,8 +98,11 @@ export async function createBaby(
   uid: string,
   profile: Omit<BabyProfile, 'id' | 'caregivers' | 'createdAt' | 'createdBy'>
 ) {
+  const encrypted = { ...profile }
+  if (encrypted.name) encrypted.name = encryptName(encrypted.name)
+
   const ref = await addDoc(collection(db, 'babies'), {
-    ...profile,
+    ...encrypted,
     caregivers: [{
       userId: uid,
       role: 'mother' as CaregiverRole,
@@ -78,6 +111,7 @@ export async function createBaby(
       addedAt: Timestamp.now(),
     }],
     caregiverIds: [uid],
+    alarms: [], // Shared alarms
     createdAt: serverTimestamp(),
     createdBy: uid,
   })
@@ -92,7 +126,9 @@ export async function updateBabyProfile(
   babyId: string,
   profile: Partial<BabyProfile>
 ) {
-  await updateDoc(doc(db, 'babies', babyId), { ...profile })
+  const encrypted = { ...profile }
+  if (encrypted.name) encrypted.name = encryptName(encrypted.name)
+  await updateDoc(doc(db, 'babies', babyId), { ...encrypted })
 }
 
 export async function deleteBaby(babyId: string, uid: string) {
@@ -275,9 +311,25 @@ export async function getLatestStat(babyId: string, statType: string) {
   return { id: snap.docs[0].id, ...snap.docs[0].data() }
 }
 
-// ── ALARMS ────────────────────────────────────────────────
-export async function updateAlarms(uid: string, alarms: any[]) {
-  await updateDoc(doc(db, 'users', uid), {
-    'settings.alarms': alarms
+// ── ALARMS (SHARED) ──────────────────────────────────────
+export async function updateBabyAlarms(babyId: string, alarms: any[]) {
+  await updateDoc(doc(db, 'babies', babyId), { alarms })
+}
+
+export async function toggleUserAlarm(uid: string, alarmId: string, enabled: boolean) {
+  const userRef = doc(db, 'users', uid)
+  const snap = await getDoc(userRef)
+  if (!snap.exists()) return
+
+  const currentEnabled = snap.data().settings?.enabledAlarms || []
+  let updated
+  if (enabled) {
+    updated = [...new Set([...currentEnabled, alarmId])]
+  } else {
+    updated = currentEnabled.filter((id: string) => id !== alarmId)
+  }
+
+  await updateDoc(userRef, {
+    'settings.enabledAlarms': updated
   })
 }
