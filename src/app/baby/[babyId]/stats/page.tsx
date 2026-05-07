@@ -102,7 +102,7 @@ export default function StatsPage() {
         ) : (
           <>
             <div className="sec-title">{t('baby.stats.history')}</div>
-            {stats.map((s) => (
+            {stats.map((s: any) => (
               <div key={s.id} className="entry-card">
                 <EntryTime ts={s.timestamp} />
                 <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>

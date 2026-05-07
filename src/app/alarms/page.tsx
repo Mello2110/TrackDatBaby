@@ -19,7 +19,7 @@ export default function AlarmsPage() {
   const [label, setLabel] = useState('')
   const [time, setTime] = useState('08:00')
 
-  const alarms = userData?.settings?.alarms || []
+  const alarms: Alarm[] = userData?.settings?.alarms || []
 
   async function handleSave() {
     if (!user) return
@@ -100,7 +100,7 @@ export default function AlarmsPage() {
             <p className="text-sm">{t('dashboard.noAlarms') || 'No alarms set'}</p>
           </div>
         ) : (
-          alarms.sort((a, b) => a.time.localeCompare(b.time)).map((alarm) => (
+          [...alarms].sort((a, b) => a.time.localeCompare(b.time)).map((alarm) => (
             <div key={alarm.id} className="card mb-3">
               <div className="flex justify-between items-center">
                 <div>

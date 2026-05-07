@@ -131,7 +131,7 @@ export default function IllnessPage() {
         {entries.length > 0 && (
           <>
             <div className="sec-title mt-4">{t('baby.meals.allEntries')}</div>
-            {entries.map((e) => (
+            {entries.map((e: any) => (
               <div key={e.id} className="entry-card">
                 <EntryTime ts={e.timestamp} />
                 <div className="flex justify-between items-start">

@@ -118,7 +118,7 @@ export default function MealsPage() {
         {meals.length > 0 && (
           <>
             <div className="sec-title mt-4">{t('baby.meals.allEntries')}</div>
-            {meals.map((m) => (
+            {meals.map((m: any) => (
               <div key={m.id} className="entry-card">
                 <EntryTime ts={m.timestamp} />
                 <div className="flex justify-between items-center">

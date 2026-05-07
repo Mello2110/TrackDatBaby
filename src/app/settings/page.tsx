@@ -9,6 +9,7 @@ import { deleteUser } from 'firebase/auth'
 import { Topbar, TabBar, ToggleRow } from '@/components/ui'
 
 import { useLanguage } from '@/lib/LanguageContext'
+import type { UserSettings } from '@/types'
 
 type Theme = 'light' | 'dark' | 'baby'
 
@@ -20,7 +21,7 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [error, setError] = useState('')
 
-  const settings = userData?.settings || {}
+  const settings: Partial<UserSettings> = userData?.settings || {}
   const [rememberMe, setRememberMe] = useState(settings.rememberMe ?? true)
   const [feeding, setFeeding] = useState(settings.notifications?.feeding ?? true)
   const [medication, setMedication] = useState(settings.notifications?.medication ?? false)
@@ -83,7 +84,7 @@ export default function SettingsPage() {
               }}
             >
               <div className="flex justify-center gap-1 mb-2">
-                {th.dots.map((c, i) => (
+                {th.dots.map((c: string, i: number) => (
                   <span key={i} className="w-[13px] h-[13px] rounded-full inline-block"
                     style={{ background: c, border: '1px solid rgba(0,0,0,0.12)' }} />
                 ))}
