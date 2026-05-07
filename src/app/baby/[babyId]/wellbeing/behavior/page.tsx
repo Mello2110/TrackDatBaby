@@ -3,15 +3,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getBehaviors, addBehavior, deleteBehavior } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, Pill } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import { Timestamp } from 'firebase/firestore'
 import type { BehaviorType } from '@/types'
 
-function nowLocal() {
-  const d = new Date(); d.setSeconds(0, 0)
-  return d.toISOString().slice(0, 16)
-}
 
 function ScaleSlider({
   label, min_label, max_label, value, onChange
@@ -45,13 +42,14 @@ function ScaleSlider({
 
 export default function BehaviorPage() {
   const { babyId } = useParams<{ babyId: string }>()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const { t } = useLanguage()
+  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [entries, setEntries] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const [timestamp, setTimestamp] = useState(nowLocal())
+  const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
   const [behaviorType, setBehaviorType] = useState<BehaviorType>('mood')
   const [description, setDescription] = useState('')
   const [energyScale, setEnergyScale] = useState(5)
@@ -73,7 +71,7 @@ export default function BehaviorPage() {
     setSaving(true)
     await addBehavior(babyId, {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(new Date(timestamp)) as any,
+      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       behaviorType, description, energyScale, socialScale,
       trigger: trigger || undefined,
       duration: duration || undefined,
@@ -82,7 +80,7 @@ export default function BehaviorPage() {
     })
     await load()
     setShowForm(false); setSaving(false)
-    setTimestamp(nowLocal()); setDescription(''); setEnergyScale(5); setSocialScale(5)
+    setTimestamp(getNowLocal(timezone)); setDescription(''); setEnergyScale(5); setSocialScale(5)
     setTrigger(''); setDuration(''); setResponse(''); setNotes('')
   }
 

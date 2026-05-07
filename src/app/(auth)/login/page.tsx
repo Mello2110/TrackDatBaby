@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signInWithEmail, signInWithGoogle, signInWithApple } from '@/lib/auth'
+import { signInWithEmail, signInWithGoogle } from '@/lib/auth'
 import { getUser } from '@/lib/db'
 import { useLanguage } from '@/lib/LanguageContext'
 
@@ -42,18 +42,6 @@ export default function LoginPage() {
     }
   }
 
-  async function handleApple() {
-    setLoading(true)
-    try {
-      const user = await signInWithApple()
-      const data = await getUser(user.uid)
-      router.replace(data?.profile?.name ? '/dashboard' : '/onboarding')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="page-bg min-h-screen flex flex-col px-6 pt-[44px] pb-7">
@@ -137,12 +125,6 @@ export default function LoginPage() {
         {t('auth.google')}
       </button>
 
-      <button className="social-btn" onClick={handleApple} type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text)">
-          <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.4.07 2.38.74 3.2.8 1.22-.24 2.37-.93 3.68-.84 1.56.13 2.73.72 3.5 1.84-3.21 1.93-2.46 6.02.57 7.17-.6 1.43-1.37 2.85-2.95 3.91zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-        </svg>
-        {t('auth.apple')}
-      </button>
 
       <div className="text-center mt-3">
         <span style={{ color: 'var(--text2)', fontSize: 13 }}>{t('auth.noAccount')}</span>

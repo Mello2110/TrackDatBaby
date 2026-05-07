@@ -3,28 +3,25 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getMeals, addMeal, deleteMeal } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { MealEntry, MealType, FoodType, QuantityUnit } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 
-function nowLocal() {
-  const d = new Date()
-  d.setSeconds(0, 0)
-  return d.toISOString().slice(0, 16)
-}
 
 export default function MealsPage() {
   const { babyId } = useParams<{ babyId: string }>()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const router = useRouter()
   const { t } = useLanguage()
+  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [meals, setMeals] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Form state
-  const [timestamp, setTimestamp] = useState(nowLocal())
+  const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
   const [mealType, setMealType] = useState<MealType>('breakfast')
   const [foodType, setFoodType] = useState<FoodType>('solids')
   const [quantity, setQuantity] = useState('')
@@ -44,7 +41,7 @@ export default function MealsPage() {
     setSaving(true)
     await addMeal(babyId, {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(new Date(timestamp)) as any,
+      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       mealType, foodType,
       quantity: parseFloat(quantity),
       unit, notes,
@@ -53,7 +50,7 @@ export default function MealsPage() {
     setShowForm(false)
     setSaving(false)
     setQuantity(''); setNotes('')
-    setTimestamp(nowLocal())
+    setTimestamp(getNowLocal(timezone))
   }
 
   const latest = meals[0]

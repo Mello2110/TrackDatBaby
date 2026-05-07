@@ -23,7 +23,7 @@ export async function createUser(uid: string, profile: Partial<UserProfile>) {
       theme: 'light',
       rememberMe: true,
       language: 'en',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezone: 'Europe/Berlin',
       alarms: [],
       notifications: { feeding: true, medication: false, push: true },
     },
@@ -273,4 +273,11 @@ export async function getLatestStat(babyId: string, statType: string) {
   const snap = await getDocs(q)
   if (snap.empty) return null
   return { id: snap.docs[0].id, ...snap.docs[0].data() }
+}
+
+// ── ALARMS ────────────────────────────────────────────────
+export async function updateAlarms(uid: string, alarms: any[]) {
+  await updateDoc(doc(db, 'users', uid), {
+    'settings.alarms': alarms
+  })
 }

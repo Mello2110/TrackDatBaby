@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/LanguageContext'
 import { useAuth } from '@/lib/AuthContext'
+import { formatInTimezone } from '@/lib/utils'
 
 // ── TOPBAR ────────────────────────────────────────────────
 interface TopbarProps {
@@ -219,10 +220,12 @@ export function Pill({ children, color = 'neutral' }: PillProps) {
 
 // ── ENTRY TIME ────────────────────────────────────────────
 export function EntryTime({ ts }: { ts: Date | any }) {
+  const { userData } = useAuth()
+  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const d = ts?.toDate ? ts.toDate() : new Date(ts)
   return (
     <div className="text-[11px] mb-[5px]" style={{ color: 'var(--text3)' }}>
-      {d.toLocaleString()}
+      {formatInTimezone(d, timezone)}
     </div>
   )
 }

@@ -3,15 +3,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getStats, addStat } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { StatType, StatUnit } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 
-function nowLocal() {
-  const d = new Date(); d.setSeconds(0,0)
-  return d.toISOString().slice(0,16)
-}
 
 const getStatTypes = (t: any): { value: StatType; label: string; unit: StatUnit; bg: string; stroke: string }[] => [
   { value: 'weight', label: t('baby.dashboard.weight'), unit: 'kg', bg: '--rose-bg', stroke: '--rose' },
@@ -22,14 +19,15 @@ const getStatTypes = (t: any): { value: StatType; label: string; unit: StatUnit;
 
 export default function StatsPage() {
   const { babyId } = useParams<{ babyId: string }>()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const { t } = useLanguage()
+  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [stats, setStats] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [statType, setStatType] = useState<StatType>('weight')
   const [value, setValue] = useState('')
-  const [timestamp, setTimestamp] = useState(nowLocal())
+  const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
   const [notes, setNotes] = useState('')
 
   const STAT_TYPES = getStatTypes(t)
@@ -48,12 +46,12 @@ export default function StatsPage() {
     const selectedUnit = STAT_TYPES.find(s => s.value === statType)?.unit || 'kg'
     await addStat(babyId, {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(new Date(timestamp)) as any,
+      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       statType, value: parseFloat(value), unit: selectedUnit, notes,
     })
     await loadStats()
     setShowForm(false); setSaving(false); setValue(''); setNotes('')
-    setTimestamp(nowLocal())
+    setTimestamp(getNowLocal(timezone))
   }
 
   if (showForm) return (

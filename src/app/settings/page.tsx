@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const [medication, setMedication] = useState(settings.notifications?.medication ?? false)
   const [push, setPush] = useState(settings.notifications?.push ?? true)
   const [language, setLanguage] = useState(settings.language || 'en')
+  const [timezone, setTimezone] = useState(settings.timezone || 'Europe/Berlin')
 
   const THEMES: { id: Theme; label: string; dots: string[] }[] = [
     { id: 'light', label: t('settings.light'), dots: ['#DDD7CC', '#F5F0E8', '#A85C28'] },
@@ -36,7 +37,7 @@ export default function SettingsPage() {
   async function save() {
     if (!user) return
     await updateUserSettings(user.uid, {
-      theme, rememberMe, language,
+      theme, rememberMe, language, timezone,
       notifications: { feeding, medication, push },
     })
     await refreshUserData()
@@ -96,11 +97,22 @@ export default function SettingsPage() {
         <div className="sec-title">{t('settings.preferences')}</div>
         <ToggleRow label={t('settings.keepSignedIn')} value={rememberMe} onChange={setRememberMe} />
 
-        <div className="mb-4 mt-4">
+        <div className="mb-4">
           <label className="input-label">{t('settings.language')}</label>
           <select className="input-field" value={language} onChange={(e) => setLanguage(e.target.value)}>
             <option value="en">English</option>
             <option value="de">Deutsch</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="input-label">{t('settings.timezone') || 'Timezone'}</label>
+          <select className="input-field" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+            <option value="Europe/Berlin">Europe/Berlin (German Time)</option>
+            <option value="UTC">UTC</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
           </select>
         </div>
 

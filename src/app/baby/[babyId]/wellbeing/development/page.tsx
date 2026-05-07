@@ -3,15 +3,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import { getDevelopments, addDevelopment, deleteDevelopment } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, Pill } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import { Timestamp } from 'firebase/firestore'
 import type { MilestoneType, ComparisonStatus } from '@/types'
 
-function nowLocal() {
-  const d = new Date(); d.setSeconds(0, 0)
-  return d.toISOString().slice(0, 16)
-}
 
 const getComparisonOptions = (t: any): { value: ComparisonStatus; label: string; color: 'mint' | 'blue' | 'accent' }[] => [
   { value: 'early', label: t('baby.wellbeing.early'), color: 'mint' },
@@ -21,13 +18,14 @@ const getComparisonOptions = (t: any): { value: ComparisonStatus; label: string;
 
 export default function DevelopmentPage() {
   const { babyId } = useParams<{ babyId: string }>()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const { t } = useLanguage()
+  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [entries, setEntries] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const [timestamp, setTimestamp] = useState(nowLocal())
+  const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
   const [milestoneType, setMilestoneType] = useState<MilestoneType>('social')
   const [description, setDescription] = useState('')
   const [ageInMonths, setAgeInMonths] = useState('')
@@ -46,7 +44,7 @@ export default function DevelopmentPage() {
     setSaving(true)
     await addDevelopment(babyId, {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(new Date(timestamp)) as any,
+      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       milestoneType, description,
       ageInMonths: parseInt(ageInMonths) || 0,
       comparisonStatus,
@@ -54,7 +52,7 @@ export default function DevelopmentPage() {
     })
     await load()
     setShowForm(false); setSaving(false)
-    setTimestamp(nowLocal()); setDescription(''); setAgeInMonths(''); setNotes('')
+    setTimestamp(getNowLocal(timezone)); setDescription(''); setAgeInMonths(''); setNotes('')
   }
 
   const latest = entries[0]
