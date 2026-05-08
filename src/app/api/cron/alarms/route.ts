@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server'
 import { getAdminDb, getAdminMessaging } from '@/lib/firebase-admin'
 import { getNowLocal } from '@/lib/utils'
 import type { messaging } from 'firebase-admin'
+import { Receiver } from '@upstash/qstash/nextjs'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
-  // Security check for Vercel Cron
-  const authHeader = request.headers.get('authorization')
-  if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+// Upstash security handler
+const receiver = new Receiver({
+  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || '',
+  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || '',
+})
 
+async function handler(request: Request) {
   try {
     const adminDb = getAdminDb()
     const adminMessaging = getAdminMessaging()
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     const nowStr = getNowLocal('Europe/Berlin')
     const [, currentTime] = nowStr.split('T')
 
-    console.log(`[Cron] Checking alarms for ${currentTime}...`)
+    console.log(`[QStash-Cron] Checking alarms for ${currentTime}...`)
 
     const notifications: messaging.TokenMessage[] = []
 
@@ -83,7 +84,7 @@ export async function GET(request: Request) {
     }
 
     if (notifications.length > 0) {
-      console.log(`[Cron] Sending ${notifications.length} notifications...`)
+      console.log(`[QStash] Sending ${notifications.length} notifications...`)
       const batches: messaging.TokenMessage[][] = []
       for (let i = 0; i < notifications.length; i += 500) {
         batches.push(notifications.slice(i, i + 500))
@@ -98,7 +99,29 @@ export async function GET(request: Request) {
     })
 
   } catch (error: any) {
-    console.error('[Cron Error]:', error)
+    console.error('[QStash Error]:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+// Wrap the handler with Upstash verification
+export const POST = async (req: Request) => {
+  // In development, we skip signature check
+  if (process.env.NODE_ENV !== 'production') {
+    return handler(req)
+  }
+
+  // Verify signature from Upstash
+  const signature = req.headers.get("upstash-signature") || "";
+  const body = await req.text();
+  const isValid = await receiver.verify({ signature, body });
+
+  if (!isValid) {
+    return new Response("Invalid signature", { status: 401 });
+  }
+
+  return handler(req)
+}
+
+// We also allow GET for manual testing (protected by CRON_SECRET if needed)
+export const GET = handler
