@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminDb, getAdminMessaging } from '@/lib/firebase-admin'
 import { getNowLocal } from '@/lib/utils'
 import type { messaging } from 'firebase-admin'
-import { Receiver } from '@upstash/qstash/nextjs'
+import { Receiver } from '@upstash/qstash'
 
 export const dynamic = 'force-dynamic'
 
