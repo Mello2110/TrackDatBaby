@@ -324,7 +324,7 @@ export async function toggleUserAlarm(uid: string, alarmId: string, enabled: boo
   const currentEnabled = snap.data().settings?.enabledAlarms || []
   let updated
   if (enabled) {
-    updated = [...new Set([...currentEnabled, alarmId])]
+    updated = Array.from(new Set([...currentEnabled, alarmId]))
   } else {
     updated = currentEnabled.filter((id: string) => id !== alarmId)
   }
