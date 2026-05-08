@@ -36,7 +36,7 @@ export default function SettingsPage() {
 
   const THEMES: { id: Theme; label: string; dots: string[] }[] = [
     { id: 'light', label: t('settings.light'), dots: ['#DDD7CC', '#F5F0E8', '#A85C28'] },
-    { id: 'dark',  label: t('settings.dark'),  dots: ['#12100C', '#282018', '#D08848'] },
+    { id: 'dark',  label: t('settings.dark'),  dots: ['#12100C', '#fcdec0ff', '#D08848'] },
     { id: 'baby',  label: t('settings.baby'),  dots: ['#EDD8E4', '#FDF6FA', '#B83860'] },
   ]
 
