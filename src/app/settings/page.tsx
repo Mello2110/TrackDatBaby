@@ -41,6 +41,13 @@ export default function SettingsPage() {
   ]
 
   const [saving, setSaving] = useState(false)
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setNotifPermission('Notification' in window ? Notification.permission : 'unsupported')
+    }
+  }, [])
 
   async function save() {
     if (!user) return
@@ -196,7 +203,61 @@ export default function SettingsPage() {
         <div className="sec-title">{t('settings.reminders')}</div>
         <ToggleRow label={t('settings.feedingReminders')} value={feeding} onChange={setFeeding} />
         <ToggleRow label={t('settings.medicationReminders')} value={medication} onChange={setMedication} />
-        <ToggleRow label={t('settings.pushNotifications')} value={push} onChange={setPush} />
+
+        {/* Push Notifications */}
+        <div className="card mb-3 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+                {t('settings.pushNotifications')}
+              </div>
+              <div className="text-[12px] mt-1" style={{ color: 'var(--text3)' }}>
+                {notifPermission === 'granted'
+                  ? '✅ Aktiv – Erlaubnis erteilt'
+                  : notifPermission === 'denied'
+                  ? '❌ Blockiert – Browser-Einstellungen zurücksetzen'
+                  : notifPermission === 'unsupported'
+                  ? '❌ Nicht unterstützt'
+                  : '⏳ Noch nicht aktiviert'}
+              </div>
+            </div>
+            <button
+              id="enable-push-btn"
+              onClick={async () => {
+                if (!user) return
+                if (notifPermission === 'unsupported') { alert('Dein Browser unterstützt keine Benachrichtigungen.'); return }
+                if (notifPermission === 'denied') { alert('Benachrichtigungen sind blockiert. Bitte klicke auf das Schloss-Symbol neben der URL und erlaube Benachrichtigungen.'); return }
+                
+                const permission = await Notification.requestPermission()
+                setNotifPermission(permission)
+                if (permission === 'granted') {
+                  try {
+                    const m = await messaging()
+                    if (m) {
+                      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                      await navigator.serviceWorker.ready
+                      const token = await getToken(m, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration })
+                      if (token) {
+                        await saveFCMToken(user.uid, token)
+                        setPush(true)
+                        alert('✅ Push-Benachrichtigungen aktiviert!')
+                      }
+                    }
+                  } catch (e: any) {
+                    alert('Fehler: ' + e.message)
+                  }
+                } else {
+                  setPush(false)
+                }
+              }}
+              className="btn-primary text-sm px-4 py-2"
+              style={{ opacity: notifPermission === 'granted' ? 0.5 : 1 }}
+              disabled={notifPermission === 'granted'}
+            >
+              {notifPermission === 'granted' ? 'Aktiv' : 'Aktivieren'}
+            </button>
+          </div>
+        </div>
 
         {/* Data */}
         <div className="sec-title mt-5">{t('settings.dataExport')}</div>
