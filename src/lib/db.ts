@@ -336,8 +336,10 @@ export async function toggleUserAlarm(uid: string, alarmId: string, enabled: boo
 
 export async function saveFCMToken(uid: string, token: string) {
   const userRef = doc(db, 'users', uid)
+  // We overwrite the array with just this token to avoid duplicate notifications.
+  // If multi-device support is needed in the future, use arrayUnion instead.
   await updateDoc(userRef, {
-    fcmTokens: arrayUnion(token)
+    fcmTokens: [token]
   })
 }
 

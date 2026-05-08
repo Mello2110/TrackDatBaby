@@ -61,8 +61,10 @@ async function handler(_request: Request) {
           const user = userDoc.data()!
           const enabledAlarms: string[] = user?.settings?.enabledAlarms || []
           const pushEnabled: boolean = user?.settings?.notifications?.push ?? false
-          // Deduplicate tokens to avoid sending multiple notifications to the same device
-          const tokens: string[] = [...new Set<string>(user?.fcmTokens || [])]
+          // Deduplicate tokens. Keep only the LAST one to guarantee one notification
+          // per user per alarm, regardless of how many tokens are stored in Firestore.
+          const rawTokens: string[] = user?.fcmTokens || []
+          const tokens: string[] = rawTokens.length > 0 ? [rawTokens[rawTokens.length - 1]] : []
 
           if (!pushEnabled || tokens.length === 0) continue
 
