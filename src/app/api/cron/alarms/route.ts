@@ -46,12 +46,18 @@ async function handler(request: Request) {
             if (pushEnabled && tokens.length > 0) {
               dueAlarms.forEach((alarm: any) => {
                 if (enabledAlarms.includes(alarm.id)) {
+                  // Map alarm type to German label + emoji
+                  const typeLabel =
+                    alarm.type === 'feeding'    ? '🍼 Mahlzeit' :
+                    alarm.type === 'medication' ? '💊 Medikamente' :
+                                                  '🔔 Sonstiges'
+
                   tokens.forEach((token: string) => {
                     notifications.push({
                       token,
                       notification: {
-                        title: `${alarm.label} 🔔`,
-                        body: `Zeit für ${baby.name}! (${alarm.time})`,
+                        title: typeLabel,
+                        body: `${baby.name} · Zeit für: ${alarm.label}`,
                       },
                       data: {
                         babyId: babyDoc.id,
