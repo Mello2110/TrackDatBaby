@@ -7,7 +7,6 @@ import { updateUserSettings } from '@/lib/db'
 import { logOut } from '@/lib/auth'
 import { deleteUser } from 'firebase/auth'
 import { Topbar, TabBar, ToggleRow } from '@/components/ui'
-
 import { useLanguage } from '@/lib/LanguageContext'
 import type { UserSettings } from '@/types'
 import { messaging } from '@/lib/firebase'
@@ -18,110 +17,99 @@ const VAPID_KEY = "BN2DCRNIc3EPq53WWf4aGUDAztBpITlHqzmsLinjFwXxIFRWSfC1ZzqlRsfFp
 
 type Theme = 'light' | 'dark' | 'baby'
 
+// Register FCM token after permission is granted (called async, not blocking the UI event)
+async function registerFCMToken(uid: string) {
+  try {
+    const m = await messaging()
+    if (!m) return
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    await navigator.serviceWorker.ready
+    const token = await getToken(m, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration })
+    if (token) await saveFCMToken(uid, token)
+  } catch (e) {
+    console.error('FCM token registration failed:', e)
+  }
+}
+
 export default function SettingsPage() {
   const { user, userData, refreshUserData } = useAuth()
   const { theme, setTheme } = useTheme()
   const { t } = useLanguage()
   const router = useRouter()
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [error, setError] = useState('')
 
   const settings: Partial<UserSettings> = userData?.settings || {}
   const [rememberMe, setRememberMe] = useState(settings.rememberMe ?? true)
-  const [feeding, setFeeding] = useState(settings.notifications?.feeding ?? true)
-  const [medication, setMedication] = useState(settings.notifications?.medication ?? false)
-  const [push, setPush] = useState(settings.notifications?.push ?? true)
+  // Push defaults to false for all users
+  const [push, setPush] = useState(settings.notifications?.push ?? false)
   const [language, setLanguage] = useState(settings.language || 'en')
   const [timezone, setTimezone] = useState(settings.timezone || 'Europe/Berlin')
 
-  const THEMES: { id: Theme; label: string; dots: string[] }[] = [
-    { id: 'light', label: t('settings.light'), dots: ['#DDD7CC', '#F5F0E8', '#A85C28'] },
-    { id: 'dark',  label: t('settings.dark'),  dots: ['#12100C', '#fcdec0ff', '#D08848'] },
-    { id: 'baby',  label: t('settings.baby'),  dots: ['#EDD8E4', '#FDF6FA', '#B83860'] },
-  ]
-
   const [saving, setSaving] = useState(false)
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [error, setError] = useState('')
+  const [pushStatus, setPushStatus] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('default')
 
+  // Read browser permission state client-side only (SSR safe)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setNotifPermission('Notification' in window ? Notification.permission : 'unsupported')
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushStatus(Notification.permission as any)
+    } else if (typeof window !== 'undefined') {
+      setPushStatus('unsupported')
     }
   }, [])
+
+  // This is the key function: called DIRECTLY from the toggle click.
+  // No async operations before Notification.requestPermission() — browser requires this.
+  async function handlePushToggle(newValue: boolean) {
+    if (!newValue) {
+      // User is turning off — just update state and save
+      setPush(false)
+      return
+    }
+
+    // User wants to turn ON
+    if (pushStatus === 'unsupported') {
+      alert('Dein Browser unterstützt leider keine Push-Benachrichtigungen.')
+      return
+    }
+
+    if (pushStatus === 'denied') {
+      alert('Du hast Push-Benachrichtigungen blockiert.\n\nBitte klicke auf das Schloss-Symbol 🔒 neben der Webseiten-Adresse und setze die Berechtigung für Benachrichtigungen zurück.')
+      return
+    }
+
+    if (pushStatus === 'granted') {
+      // Already have permission, just toggle on
+      setPush(true)
+      registerFCMToken(user!.uid)
+      return
+    }
+
+    // pushStatus === 'default' → need to ask. This call MUST happen synchronously in a click handler.
+    const permission = await Notification.requestPermission()
+    setPushStatus(permission as any)
+
+    if (permission === 'granted') {
+      setPush(true)
+      registerFCMToken(user!.uid)
+    } else {
+      setPush(false)
+    }
+  }
 
   async function save() {
     if (!user) return
     setSaving(true)
     setError('')
-    
-    console.log('Starting save process...')
-
-    // Request push permissions if toggled on
-    if (push) {
-      try {
-        console.log('Push enabled, checking browser support...')
-        if (!('Notification' in window)) {
-          throw new Error('This browser does not support notifications.')
-        }
-
-        console.log('Current permission state:', Notification.permission)
-        
-        // If already denied, tell the user they need to reset it
-        if (Notification.permission === 'denied') {
-          setError(t('settings.pushDenied') || 'Push permissions are blocked. Please reset them in your browser settings.')
-          // We continue saving other settings
-        }
-
-        const permission = await Notification.requestPermission()
-        console.log('Permission result:', permission)
-
-        if (permission === 'granted') {
-          const m = await messaging()
-          if (m) {
-            console.log('Firebase messaging instance obtained. Registering Service Worker...')
-            
-            // Explicitly register and wait for service worker to be ready
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-            console.log('Service Worker registered. Scope:', registration.scope)
-            
-            // Wait for it to be active
-            await navigator.serviceWorker.ready
-            
-            console.log('Service Worker ready. Requesting FCM token...')
-            const token = await getToken(m, { 
-              vapidKey: VAPID_KEY,
-              serviceWorkerRegistration: registration 
-            })
-            
-            if (token) {
-              console.log('FCM Token obtained successfully:', token.substring(0, 10) + '...')
-              await saveFCMToken(user.uid, token)
-            } else {
-              console.warn('No token received')
-            }
-          } else {
-            console.warn('Messaging not supported in this environment (isSupported returned false)')
-          }
-        }
-      } catch (err: any) {
-        console.error('Push Error Details:', err)
-        setError('Push Error: ' + (err.message || 'Unknown error'))
-        // We don't return here, we still want to save other settings
-      }
-    }
-
     try {
-      console.log('Updating user settings in database...')
       await updateUserSettings(user.uid, {
         theme, rememberMe, language, timezone,
-        notifications: { feeding, medication, push },
+        notifications: { feeding: push, medication: push, push },
       })
       await refreshUserData()
-      console.log('Settings saved successfully. Redirecting...')
       router.push('/dashboard')
     } catch (err: any) {
-      console.error('Database Save Error:', err)
-      setError('Save Error: ' + err.message)
+      setError(err.message)
     } finally {
       setSaving(false)
     }
@@ -147,9 +135,22 @@ export default function SettingsPage() {
     }
   }
 
+  const THEMES: { id: Theme; label: string; dots: string[] }[] = [
+    { id: 'light', label: t('settings.light'), dots: ['#DDD7CC', '#F5F0E8', '#A85C28'] },
+    { id: 'dark',  label: t('settings.dark'),  dots: ['#12100C', '#282018', '#D08848'] },
+    { id: 'baby',  label: t('settings.baby'),  dots: ['#EDD8E4', '#FDF6FA', '#B83860'] },
+  ]
+
+  const pushStatusText = {
+    granted: '✅ Erlaubnis erteilt',
+    denied: '❌ Blockiert – Bitte Browser-Einstellungen zurücksetzen',
+    unsupported: '❌ Von diesem Browser nicht unterstützt',
+    default: '⏳ Noch nicht aktiviert',
+  }[pushStatus]
+
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title={t('settings.title')} action={{ label: saving ? t('common.saving') : t('common.save'), onClick: save }} />
+      <Topbar title={t('settings.title')} action={{ label: saving ? '...' : t('common.save'), onClick: save }} />
 
       <div className="scroll-body">
         {/* Theme */}
@@ -199,64 +200,17 @@ export default function SettingsPage() {
           </select>
         </div>
 
-        {/* Reminders */}
-        <div className="sec-title">{t('settings.reminders')}</div>
-        <ToggleRow label={t('settings.feedingReminders')} value={feeding} onChange={setFeeding} />
-        <ToggleRow label={t('settings.medicationReminders')} value={medication} onChange={setMedication} />
-
-        {/* Push Notifications */}
+        {/* Push Notifications — single unified toggle */}
+        <div className="sec-title">{t('settings.pushNotifications')}</div>
         <div className="card mb-3 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
-                {t('settings.pushNotifications')}
-              </div>
-              <div className="text-[12px] mt-1" style={{ color: 'var(--text3)' }}>
-                {notifPermission === 'granted'
-                  ? '✅ Aktiv – Erlaubnis erteilt'
-                  : notifPermission === 'denied'
-                  ? '❌ Blockiert – Browser-Einstellungen zurücksetzen'
-                  : notifPermission === 'unsupported'
-                  ? '❌ Nicht unterstützt'
-                  : '⏳ Noch nicht aktiviert'}
-              </div>
-            </div>
-            <button
-              id="enable-push-btn"
-              onClick={async () => {
-                if (!user) return
-                if (notifPermission === 'unsupported') { alert('Dein Browser unterstützt keine Benachrichtigungen.'); return }
-                if (notifPermission === 'denied') { alert('Benachrichtigungen sind blockiert. Bitte klicke auf das Schloss-Symbol neben der URL und erlaube Benachrichtigungen.'); return }
-                
-                const permission = await Notification.requestPermission()
-                setNotifPermission(permission)
-                if (permission === 'granted') {
-                  try {
-                    const m = await messaging()
-                    if (m) {
-                      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-                      await navigator.serviceWorker.ready
-                      const token = await getToken(m, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration })
-                      if (token) {
-                        await saveFCMToken(user.uid, token)
-                        setPush(true)
-                        alert('✅ Push-Benachrichtigungen aktiviert!')
-                      }
-                    }
-                  } catch (e: any) {
-                    alert('Fehler: ' + e.message)
-                  }
-                } else {
-                  setPush(false)
-                }
-              }}
-              className="btn-primary text-sm px-4 py-2"
-              style={{ opacity: notifPermission === 'granted' ? 0.5 : 1 }}
-              disabled={notifPermission === 'granted'}
-            >
-              {notifPermission === 'granted' ? 'Aktiv' : 'Aktivieren'}
-            </button>
-          </div>
+          <ToggleRow
+            label="Benachrichtigungen aktivieren"
+            value={push}
+            onChange={handlePushToggle}
+          />
+          <p className="text-[11px] mt-2" style={{ color: pushStatus === 'denied' ? 'var(--danger)' : 'var(--text3)' }}>
+            {pushStatusText}
+          </p>
         </div>
 
         {/* Data */}
