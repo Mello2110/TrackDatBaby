@@ -47,41 +47,74 @@ export default function SettingsPage() {
     setSaving(true)
     setError('')
     
+    console.log('Starting save process...')
+
     // Request push permissions if toggled on
     if (push) {
       try {
+        console.log('Push enabled, checking browser support...')
         if (!('Notification' in window)) {
           throw new Error('This browser does not support notifications.')
         }
 
+        console.log('Current permission state:', Notification.permission)
+        
+        // If already denied, tell the user they need to reset it
+        if (Notification.permission === 'denied') {
+          setError(t('settings.pushDenied') || 'Push permissions are blocked. Please reset them in your browser settings.')
+          // We continue saving other settings
+        }
+
         const permission = await Notification.requestPermission()
+        console.log('Permission result:', permission)
+
         if (permission === 'granted') {
           const m = await messaging()
           if (m) {
-            const token = await getToken(m, { vapidKey: VAPID_KEY })
+            console.log('Firebase messaging instance obtained. Registering Service Worker...')
+            
+            // Explicitly register and wait for service worker to be ready
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            console.log('Service Worker registered. Scope:', registration.scope)
+            
+            // Wait for it to be active
+            await navigator.serviceWorker.ready
+            
+            console.log('Service Worker ready. Requesting FCM token...')
+            const token = await getToken(m, { 
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: registration 
+            })
+            
             if (token) {
+              console.log('FCM Token obtained successfully:', token.substring(0, 10) + '...')
               await saveFCMToken(user.uid, token)
+            } else {
+              console.warn('No token received')
             }
+          } else {
+            console.warn('Messaging not supported in this environment (isSupported returned false)')
           }
-        } else if (permission === 'denied') {
-          console.warn('Push permission denied')
-          // We still save settings, but user won't get push
         }
       } catch (err: any) {
-        console.error('Push registration failed:', err)
-        setError('Push Error: ' + err.message)
+        console.error('Push Error Details:', err)
+        setError('Push Error: ' + (err.message || 'Unknown error'))
+        // We don't return here, we still want to save other settings
       }
     }
 
     try {
+      console.log('Updating user settings in database...')
       await updateUserSettings(user.uid, {
         theme, rememberMe, language, timezone,
         notifications: { feeding, medication, push },
       })
       await refreshUserData()
+      console.log('Settings saved successfully. Redirecting...')
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message)
+      console.error('Database Save Error:', err)
+      setError('Save Error: ' + err.message)
     } finally {
       setSaving(false)
     }
