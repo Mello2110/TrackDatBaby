@@ -40,33 +40,51 @@ export default function SettingsPage() {
     { id: 'baby',  label: t('settings.baby'),  dots: ['#EDD8E4', '#FDF6FA', '#B83860'] },
   ]
 
+  const [saving, setSaving] = useState(false)
+
   async function save() {
     if (!user) return
+    setSaving(true)
+    setError('')
     
     // Request push permissions if toggled on
     if (push) {
       try {
-        const m = await messaging()
-        if (m) {
-          const permission = await Notification.requestPermission()
-          if (permission === 'granted') {
+        if (!('Notification' in window)) {
+          throw new Error('This browser does not support notifications.')
+        }
+
+        const permission = await Notification.requestPermission()
+        if (permission === 'granted') {
+          const m = await messaging()
+          if (m) {
             const token = await getToken(m, { vapidKey: VAPID_KEY })
             if (token) {
               await saveFCMToken(user.uid, token)
             }
           }
+        } else if (permission === 'denied') {
+          console.warn('Push permission denied')
+          // We still save settings, but user won't get push
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Push registration failed:', err)
+        setError('Push Error: ' + err.message)
       }
     }
 
-    await updateUserSettings(user.uid, {
-      theme, rememberMe, language, timezone,
-      notifications: { feeding, medication, push },
-    })
-    await refreshUserData()
-    router.push('/dashboard')
+    try {
+      await updateUserSettings(user.uid, {
+        theme, rememberMe, language, timezone,
+        notifications: { feeding, medication, push },
+      })
+      await refreshUserData()
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleLogout() {
@@ -91,7 +109,7 @@ export default function SettingsPage() {
 
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title={t('settings.title')} action={{ label: t('common.save'), onClick: save }} />
+      <Topbar title={t('settings.title')} action={{ label: saving ? t('common.saving') : t('common.save'), onClick: save }} />
 
       <div className="scroll-body">
         {/* Theme */}

@@ -11,6 +11,7 @@ firebase.initializeApp({
   appId: "1:1037931165351:web:ba272eb945bc2a584d8d82"
 });
 
+console.log('[firebase-messaging-sw.js] Firebase initialized');
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
