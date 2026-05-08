@@ -1,7 +1,7 @@
 import {
   doc, collection, getDoc, getDocs, setDoc, updateDoc,
   addDoc, deleteDoc, query, orderBy, where, Timestamp,
-  arrayUnion, serverTimestamp,
+  arrayUnion, arrayRemove, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { encryptName, decryptName } from './utils'
@@ -331,5 +331,19 @@ export async function toggleUserAlarm(uid: string, alarmId: string, enabled: boo
 
   await updateDoc(userRef, {
     'settings.enabledAlarms': updated
+  })
+}
+
+export async function saveFCMToken(uid: string, token: string) {
+  const userRef = doc(db, 'users', uid)
+  await updateDoc(userRef, {
+    fcmTokens: arrayUnion(token)
+  })
+}
+
+export async function removeFCMToken(uid: string, token: string) {
+  const userRef = doc(db, 'users', uid)
+  await updateDoc(userRef, {
+    fcmTokens: arrayRemove(token)
   })
 }

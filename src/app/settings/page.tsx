@@ -10,6 +10,11 @@ import { Topbar, TabBar, ToggleRow } from '@/components/ui'
 
 import { useLanguage } from '@/lib/LanguageContext'
 import type { UserSettings } from '@/types'
+import { messaging } from '@/lib/firebase'
+import { getToken } from 'firebase/messaging'
+import { saveFCMToken } from '@/lib/db'
+
+const VAPID_KEY = "BN2DCRNIc3EPq53WWf4aGUDAztBpITlHqzmsLinjFwXxIFRWSfC1ZzqlRsfFpFkUVBC7jVMfI5YAlb7MpOy1I3c"
 
 type Theme = 'light' | 'dark' | 'baby'
 
@@ -37,6 +42,25 @@ export default function SettingsPage() {
 
   async function save() {
     if (!user) return
+    
+    // Request push permissions if toggled on
+    if (push) {
+      try {
+        const m = await messaging()
+        if (m) {
+          const permission = await Notification.requestPermission()
+          if (permission === 'granted') {
+            const token = await getToken(m, { vapidKey: VAPID_KEY })
+            if (token) {
+              await saveFCMToken(user.uid, token)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Push registration failed:', err)
+      }
+    }
+
     await updateUserSettings(user.uid, {
       theme, rememberMe, language, timezone,
       notifications: { feeding, medication, push },

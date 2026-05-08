@@ -11,6 +11,7 @@ export interface UserProfile {
   personalDiseases: string
   notes: string
   role: CaregiverRole
+  fcmTokens?: string[]
   createdAt: Date
 }
 

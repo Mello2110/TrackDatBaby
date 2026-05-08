@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getMessaging, isSupported } from 'firebase/messaging'
 
 // ─────────────────────────────────────────────────────────
 // 🔧 REPLACE THESE WITH YOUR FIREBASE PROJECT CREDENTIALS
@@ -21,6 +22,7 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
 export const db = getFirestore(app)
+export const messaging = async () => (await isSupported()) ? getMessaging(app) : null
 
 // Auth providers
 export const googleProvider = new GoogleAuthProvider()
