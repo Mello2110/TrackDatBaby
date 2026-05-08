@@ -101,24 +101,6 @@ export default function DashboardPage() {
           </svg>
         </div>
 
-        {/* Alarms category */}
-        <div className="card flex gap-[13px] items-center mb-5"
-          onClick={() => router.push('/alarms')}>
-          <div className="avatar" style={{ background: 'var(--blue-bg)', color: 'var(--blue-text)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.5 3.5c1.5 1.5 1.5 1.5 1.5 1.5M7.5 3.5c-1.5 1.5-1.5 1.5-1.5 1.5"/>
-            </svg>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>{t('dashboard.alarms') || 'Alarms & Reminders'}</div>
-            <div className="text-[12px] mt-[1px]" style={{ color: 'var(--text3)' }}>
-              {t('dashboard.manageAlarms') || 'Set times for meals & medication'}
-            </div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2" strokeLinecap="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </div>
 
         {/* Babies */}
         <div className="sec-title">{t('dashboard.babiesTitle')}</div>

@@ -28,6 +28,11 @@ const getCats = (t: any) => [
     bgVar: '--lav-bg', strokeVar: '--lav',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lav)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
   },
+  {
+    key: 'alarms', label: t('dashboard.alarms'), sub: t('dashboard.manageAlarms'),
+    bgVar: '--accent-bg', strokeVar: '--accent',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.5 3.5c1.5 1.5 1.5 1.5 1.5 1.5M7.5 3.5c-1.5 1.5-1.5 1.5-1.5 1.5"/></svg>,
+  },
 ]
 
 export default function BabyPage() {

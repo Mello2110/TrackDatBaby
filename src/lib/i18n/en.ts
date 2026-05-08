@@ -8,6 +8,8 @@ export const en = {
     error: 'Error',
     optional: 'Optional',
     unknown: 'Unknown',
+    ok: 'OK',
+    dismiss: 'Dismiss',
     recentLogin: 'Security notice: Please sign out and sign in again before deleting your account for verification.',
   },
   auth: {
@@ -88,6 +90,7 @@ export const en = {
     joinBtn: 'Join',
     alarms: 'Wecker',
     manageAlarms: 'Set times for meals & medication',
+    noAlarms: 'No alarms set',
   },
   settings: {
     title: 'Settings',

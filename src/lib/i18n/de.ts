@@ -10,6 +10,8 @@ export const de: AppTranslation = {
     error: 'Fehler',
     optional: 'Optional',
     unknown: 'Unbekannt',
+    ok: 'OK',
+    dismiss: 'Schließen',
     recentLogin: 'Sicherheitshinweis: Bitte melde dich einmal ab und wieder an, bevor du deinen Account löschst (Verifizierung erforderlich).',
   },
   auth: {
@@ -90,6 +92,7 @@ export const de: AppTranslation = {
     joinBtn: 'Beitreten',
     alarms: 'Wecker',
     manageAlarms: 'Zeiten für Essen & Medikamente',
+    noAlarms: 'Keine Wecker gestellt',
   },
   settings: {
     title: 'Einstellungen',

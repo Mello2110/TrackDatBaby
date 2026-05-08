@@ -3,6 +3,7 @@ import '@/styles/globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 import { ThemeProvider } from '@/lib/ThemeContext'
 import { LanguageProvider } from '@/lib/LanguageContext'
+import { AlarmWatcher } from '@/components/AlarmWatcher'
 
 export const metadata: Metadata = {
   title: 'TrackDatBaby',
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="app-frame">
                 {children}
               </div>
+              <AlarmWatcher />
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
