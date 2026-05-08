@@ -100,6 +100,8 @@ export const de: AppTranslation = {
     preferences: 'Präferenzen',
     keepSignedIn: 'Angemeldet bleiben',
     language: 'Sprache',
+    alarms: 'Wecker',
+    manageAlarms: 'Zeiten für Essen & Medikamente',
     reminders: 'Erinnerungen',
     feedingReminders: 'Mahlzeiten Erinnerung',
     medicationReminders: 'Medikamente Erinnerung',
@@ -122,7 +124,6 @@ export const de: AppTranslation = {
   baby: {
     dashboard: {
       alarms: 'Wecker',
-      manageAlarms: 'Zeiten für Essen & Medikamente',
       meals: 'Mahlzeiten',
       mealsSub: 'Fütterung loggen',
       wellbeing: 'Wohlbefinden',
