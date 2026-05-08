@@ -10,7 +10,7 @@ import { Topbar, TabBar, ToggleRow } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { UserSettings } from '@/types'
 import { messaging } from '@/lib/firebase'
-import { getToken } from 'firebase/messaging'
+import { getToken, deleteToken } from 'firebase/messaging'
 import { saveFCMToken } from '@/lib/db'
 
 const VAPID_KEY = "BN2DCRNIc3EPq53WWf4aGUDAztBpITlHqzmsLinjFwXxIFRWSfC1ZzqlRsfFpFkUVBC7jVMfI5YAlb7MpOy1I3c"
@@ -62,8 +62,24 @@ export default function SettingsPage() {
   // No async operations before Notification.requestPermission() — browser requires this.
   async function handlePushToggle(newValue: boolean) {
     if (!newValue) {
-      // User is turning off — just update state and save
+      // User is turning OFF → delete the FCM token to clean up stale tokens
       setPush(false)
+      try {
+        const m = await messaging()
+        if (m) {
+          await deleteToken(m)
+        }
+        // Clear from Firestore too
+        if (user) {
+          const { removeFCMToken } = await import('@/lib/db')
+          // We don't know the exact token here, so we just clear the whole array
+          const { doc, updateDoc } = await import('firebase/firestore')
+          const { db } = await import('@/lib/firebase')
+          await updateDoc(doc(db, 'users', user.uid), { fcmTokens: [] })
+        }
+      } catch (e) {
+        console.error('Failed to delete FCM token:', e)
+      }
       return
     }
 

@@ -52,9 +52,18 @@ async function handler(_request: Request) {
       const dueAlarms = alarms.filter((a: any) => a.time === currentTime)
       
       if (dueAlarms.length > 0) {
-        const caregivers = baby.caregivers || []
-        
-        for (const cg of caregivers) {
+        const caregivers: any[] = baby.caregivers || []
+
+        // Deduplicate caregivers by userId – the same person can appear multiple
+        // times (e.g. as creator + caregiver), which would send double notifications.
+        const seenUserIds = new Set<string>()
+        const uniqueCaregivers = caregivers.filter((cg: any) => {
+          if (seenUserIds.has(cg.userId)) return false
+          seenUserIds.add(cg.userId)
+          return true
+        })
+
+        for (const cg of uniqueCaregivers) {
           const userDoc = await adminDb.collection('users').doc(cg.userId).get()
           if (!userDoc.exists) continue
 
