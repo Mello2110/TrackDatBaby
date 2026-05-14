@@ -12,6 +12,10 @@ export function formatAge(dob: string, preferredUnit: string | undefined, t: any
     const weeks = differenceInWeeks(now, birth)
     return `${weeks} ${t('baby.dashboard.weeks')}`
   }
+  if (preferredUnit === 'months') {
+    const months = differenceInMonths(now, birth)
+    return `${months} ${t('baby.dashboard.months')}`
+  }
   if (preferredUnit === 'years') {
     const years = differenceInYears(now, birth)
     return `${years} ${t('baby.dashboard.years')}`
