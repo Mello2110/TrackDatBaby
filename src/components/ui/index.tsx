@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/LanguageContext'
 import { useAuth } from '@/lib/AuthContext'
@@ -241,6 +242,47 @@ export function EmptyState({ message }: { message: string }) {
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>{message}</p>
+    </div>
+  )
+}
+
+// ── ENTRY CARD ────────────────────────────────────────────
+export function EntryCard({ children, onEdit, onDelete }: { children: React.ReactNode; onEdit?: () => void; onDelete?: () => void }) {
+  const { t } = useLanguage()
+  const [showMenu, setShowMenu] = useState(false)
+  
+  return (
+    <div className="entry-card relative group">
+      <div className="pr-8">
+        {children}
+      </div>
+      {(onEdit || onDelete) && (
+        <div className="absolute top-3 right-3">
+           <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+           </button>
+           {showMenu && (
+             <div className="absolute right-0 top-8 bg-[var(--surface)] shadow-lg rounded-lg border border-[var(--border2)] py-1 z-10 w-32">
+               {onEdit && (
+                 <button className="w-full text-left px-4 py-2 text-[13px] hover:bg-[var(--bg2)] flex items-center gap-2" 
+                   onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
+                   style={{ color: 'var(--text)' }}
+                 >
+                   {t('common.edit')}
+                 </button>
+               )}
+               {onDelete && (
+                 <button className="w-full text-left px-4 py-2 text-[13px] hover:bg-[var(--bg2)] flex items-center gap-2" 
+                   onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
+                   style={{ color: 'var(--danger)' }}
+                 >
+                   {t('common.delete')}
+                 </button>
+               )}
+             </div>
+           )}
+        </div>
+      )}
     </div>
   )
 }

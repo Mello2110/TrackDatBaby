@@ -22,6 +22,8 @@ export interface UserSettings {
   timezone: string
   enabledAlarms: string[] // IDs of alarms that are active for this user
   notifications: NotificationSettings
+  weightUnit?: 'kg' | 'g'
+  ageUnit?: 'days' | 'weeks' | 'months' | 'years'
 }
 
 export interface Alarm {

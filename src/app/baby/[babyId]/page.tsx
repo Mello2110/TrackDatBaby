@@ -35,15 +35,19 @@ const getCats = (t: any) => [
   },
 ]
 
+import { formatAge, formatWeight } from '@/lib/units'
+
 export default function BabyPage() {
   const { babyId } = useParams<{ babyId: string }>()
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const router = useRouter()
   const { t } = useLanguage()
   const [baby, setBaby] = useState<BabyProfile | null>(null)
   const [recentMeals, setRecentMeals] = useState<any[]>([])
   const [latestWeight, setLatestWeight] = useState<any>(null)
   const [latestHeight, setLatestHeight] = useState<any>(null)
+
+  const settings = userData?.settings
 
   useEffect(() => {
     getBaby(babyId).then(setBaby)
@@ -56,17 +60,7 @@ export default function BabyPage() {
   }, [babyId])
 
   function getAgeDisplay(dob: string) {
-    const birth = new Date(dob)
-    const now = new Date()
-    const diffMs = now.getTime() - birth.getTime()
-    const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
-    const weeks = Math.ceil((diffDays + 0.1) / 7) // Always at least 1 week if born
-    const months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth()
-
-    if (months < 12) {
-      return `${weeks || 1} ${t('baby.dashboard.wk')}`
-    }
-    return months < 24 ? `${months} ${t('baby.dashboard.mo')}` : `${Math.floor(months / 12)} ${t('baby.dashboard.yr')}`
+    return formatAge(dob, settings?.ageUnit, t)
   }
 
   if (!baby) return <div className="page-bg flex items-center justify-center min-h-screen"><p style={{ color: 'var(--text3)' }}>{t('common.loading')}</p></div>
@@ -89,8 +83,16 @@ export default function BabyPage() {
         <div className="grid grid-cols-3 gap-2 mb-5">
           {[
             { label: t('baby.dashboard.age'), value: ageLabel, bg: '--rose-bg' },
-            { label: t('baby.dashboard.weight'), value: latestWeight ? `${latestWeight.value} kg` : (baby.birthWeight ? `${baby.birthWeight}` : '—'), bg: '--mint-bg' },
-            { label: t('baby.dashboard.height'), value: latestHeight ? `${latestHeight.value} cm` : (baby.birthHeight ? `${baby.birthHeight}` : '—'), bg: '--blue-bg' },
+            { 
+              label: t('baby.dashboard.weight'), 
+              value: latestWeight ? formatWeight(latestWeight.value, settings?.weightUnit, t) : (baby.birthWeight ? `${baby.birthWeight} kg` : '—'), 
+              bg: '--mint-bg' 
+            },
+            { 
+              label: t('baby.dashboard.height'), 
+              value: latestHeight ? `${latestHeight.value} cm` : (baby.birthHeight ? `${baby.birthHeight} cm` : '—'), 
+              bg: '--blue-bg' 
+            },
           ].map((s) => (
             <div key={s.label} className="rounded-[10px] p-3 text-center"
               style={{ background: `var(${s.bg})`, border: '2px solid var(--border2)' }}>

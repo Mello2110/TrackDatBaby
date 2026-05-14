@@ -260,6 +260,10 @@ async function getEntries(babyId: string, sub: string) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
+async function updateEntry(babyId: string, sub: string, entryId: string, data: object) {
+  await updateDoc(doc(db, 'babies', babyId, sub, entryId), data)
+}
+
 async function deleteEntry(babyId: string, sub: string, entryId: string) {
   await deleteDoc(doc(db, 'babies', babyId, sub, entryId))
 }
@@ -270,6 +274,8 @@ export const addMeal = (babyId: string, data: Omit<MealEntry, 'id' | 'createdAt'
 export const getMeals = (babyId: string) => getEntries(babyId, 'meals')
 export const deleteMeal = (babyId: string, id: string) =>
   deleteEntry(babyId, 'meals', id)
+export const updateMeal = (babyId: string, id: string, data: Partial<MealEntry>) =>
+  updateEntry(babyId, 'meals', id, data)
 
 // ── ILLNESS ───────────────────────────────────────────────
 export const addIllness = (babyId: string, data: Omit<IllnessEntry, 'id' | 'createdAt'>) =>
@@ -277,6 +283,8 @@ export const addIllness = (babyId: string, data: Omit<IllnessEntry, 'id' | 'crea
 export const getIllnesses = (babyId: string) => getEntries(babyId, 'illness')
 export const deleteIllness = (babyId: string, id: string) =>
   deleteEntry(babyId, 'illness', id)
+export const updateIllness = (babyId: string, id: string, data: Partial<IllnessEntry>) =>
+  updateEntry(babyId, 'illness', id, data)
 
 // ── DEVELOPMENT ───────────────────────────────────────────
 export const addDevelopment = (babyId: string, data: Omit<DevelopmentEntry, 'id' | 'createdAt'>) =>
@@ -284,6 +292,8 @@ export const addDevelopment = (babyId: string, data: Omit<DevelopmentEntry, 'id'
 export const getDevelopments = (babyId: string) => getEntries(babyId, 'development')
 export const deleteDevelopment = (babyId: string, id: string) =>
   deleteEntry(babyId, 'development', id)
+export const updateDevelopment = (babyId: string, id: string, data: Partial<DevelopmentEntry>) =>
+  updateEntry(babyId, 'development', id, data)
 
 // ── BEHAVIOR ──────────────────────────────────────────────
 export const addBehavior = (babyId: string, data: Omit<BehaviorEntry, 'id' | 'createdAt'>) =>
@@ -291,6 +301,8 @@ export const addBehavior = (babyId: string, data: Omit<BehaviorEntry, 'id' | 'cr
 export const getBehaviors = (babyId: string) => getEntries(babyId, 'behavior')
 export const deleteBehavior = (babyId: string, id: string) =>
   deleteEntry(babyId, 'behavior', id)
+export const updateBehavior = (babyId: string, id: string, data: Partial<BehaviorEntry>) =>
+  updateEntry(babyId, 'behavior', id, data)
 
 // ── STATS ─────────────────────────────────────────────────
 export const addStat = (babyId: string, data: Omit<StatEntry, 'id' | 'createdAt'>) =>
@@ -298,6 +310,8 @@ export const addStat = (babyId: string, data: Omit<StatEntry, 'id' | 'createdAt'
 export const getStats = (babyId: string) => getEntries(babyId, 'stats')
 export const deleteStat = (babyId: string, id: string) =>
   deleteEntry(babyId, 'stats', id)
+export const updateStat = (babyId: string, id: string, data: Partial<StatEntry>) =>
+  updateEntry(babyId, 'stats', id, data)
 
 // Get latest stat by type
 export async function getLatestStat(babyId: string, statType: string) {

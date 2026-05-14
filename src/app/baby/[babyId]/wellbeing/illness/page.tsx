@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getIllnesses, addIllness, deleteIllness } from '@/lib/db'
-import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
-import { Topbar, EntryTime, EmptyState, Pill } from '@/components/ui'
+import { getIllnesses, addIllness, deleteIllness, updateIllness } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
+import { Topbar, EntryTime, EmptyState, Pill, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import { Timestamp } from 'firebase/firestore'
 import type { SymptomType, IllnessStatus } from '@/types'
@@ -41,6 +41,7 @@ export default function IllnessPage() {
   const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [entries, setEntries] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<any>(null)
   const [saving, setSaving] = useState(false)
 
   const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
@@ -61,24 +62,55 @@ export default function IllnessPage() {
     e.preventDefault()
     if (!user) return
     setSaving(true)
-    await addIllness(babyId, {
+    const data = {
       babyId, loggedBy: user.uid,
       timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       symptomType, severity,
       temperature: temperature ? parseFloat(temperature) : undefined,
       medication: medication || undefined,
       status, notes: notes || undefined,
-    })
+    }
+
+    if (selectedEntry) {
+      await updateIllness(babyId, selectedEntry.id, data)
+    } else {
+      await addIllness(babyId, data)
+    }
+
     await load()
-    setShowForm(false); setSaving(false)
+    setShowForm(false); setSaving(false); setSelectedEntry(null)
     setTimestamp(getNowLocal(timezone)); setTemperature(''); setMedication(''); setNotes(''); setSeverity(5)
+  }
+
+  function handleEdit(e: any) {
+    setSelectedEntry(e)
+    setSymptomType(e.symptomType)
+    setTemperature(e.temperature?.toString() || '')
+    setSeverity(e.severity)
+    setMedication(e.medication || '')
+    setStatus(e.status)
+    setNotes(e.notes || '')
+    const d = e.timestamp?.toDate ? e.timestamp.toDate() : new Date(e.timestamp)
+    const year = d.toLocaleString('en-US', { timeZone: timezone, year: 'numeric' })
+    const month = d.toLocaleString('en-US', { timeZone: timezone, month: '2-digit' })
+    const day = d.toLocaleString('en-US', { timeZone: timezone, day: '2-digit' })
+    const hour = d.toLocaleString('en-US', { timeZone: timezone, hour: '2-digit', hour12: false })
+    const min = d.toLocaleString('en-US', { timeZone: timezone, minute: '2-digit' })
+    setTimestamp(`${year}-${month}-${day}T${hour === '24' ? '00' : hour}:${min}`)
+    setShowForm(true)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm(t('baby.parentProfile.areYouSure'))) return
+    await deleteIllness(babyId, id)
+    await load()
   }
 
   const latest = entries[0]
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title={t('baby.wellbeing.logIllness')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
+      <Topbar title={selectedEntry ? t('common.edit') : t('baby.wellbeing.logIllness')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
           <div className="mb-4"><label className="input-label">{t('baby.meals.timestamp')}</label>
@@ -114,7 +146,7 @@ export default function IllnessPage() {
   return (
     <div className="page-bg flex flex-col min-h-screen">
       <Topbar title={t('baby.wellbeing.illness')} backLabel={t('common.back')} backHref={`/baby/${babyId}/wellbeing`}
-        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }} />
+        action={{ label: '+ ' + t('tabs.add'), onClick: () => { setSelectedEntry(null); setShowForm(true); } }} />
       <div className="scroll-body">
         {latest ? (
           <div className="hi-card mb-3" style={{ background: 'var(--rose-bg)' }}>
@@ -132,24 +164,16 @@ export default function IllnessPage() {
           <>
             <div className="sec-title mt-4">{t('baby.meals.allEntries')}</div>
             {entries.map((e: any) => (
-              <div key={e.id} className="entry-card">
+              <EntryCard key={e.id} onEdit={() => handleEdit(e)} onDelete={() => handleDelete(e.id)}>
                 <EntryTime ts={e.timestamp} />
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                      {t(`baby.wellbeing.${e.symptomType}`)} · {t('baby.wellbeing.severity')} {e.severity}/10
-                    </div>
-                    <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>
-                      {t(`baby.wellbeing.${e.status}`)}{e.temperature ? ` · ${e.temperature}°C` : ''}{e.medication ? ` · ${e.medication}` : ''}
-                    </div>
-                    {e.notes && <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>{e.notes}</div>}
-                  </div>
-                  <button onClick={async () => { await deleteIllness(babyId, e.id); load() }}
-                    className="text-[11px] px-2 py-1 rounded" style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
-                    {t('baby.meals.delete')}
-                  </button>
+                <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                  {t(`baby.wellbeing.${e.symptomType}`)} · {t('baby.wellbeing.severity')} {e.severity}/10
                 </div>
-              </div>
+                <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>
+                  {t(`baby.wellbeing.${e.status}`)}{e.temperature ? ` · ${e.temperature}°C` : ''}{e.medication ? ` · ${e.medication}` : ''}
+                </div>
+                {e.notes && <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>{e.notes}</div>}
+              </EntryCard>
             ))}
           </>
         )}

@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getMeals, addMeal, deleteMeal } from '@/lib/db'
-import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
-import { Topbar, EntryTime, EmptyState } from '@/components/ui'
+import { getMeals, addMeal, deleteMeal, updateMeal } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
+import { Topbar, EntryTime, EmptyState, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { MealEntry, MealType, FoodType, QuantityUnit } from '@/types'
 import { Timestamp } from 'firebase/firestore'
@@ -18,6 +18,7 @@ export default function MealsPage() {
   const timezone = userData?.settings?.timezone || 'Europe/Berlin'
   const [meals, setMeals] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<any>(null)
   const [saving, setSaving] = useState(false)
 
   // Form state
@@ -39,25 +40,55 @@ export default function MealsPage() {
     e.preventDefault()
     if (!user) return
     setSaving(true)
-    await addMeal(babyId, {
+    const data = {
       babyId, loggedBy: user.uid,
       timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       mealType, foodType,
       quantity: parseFloat(quantity),
       unit, notes,
-    })
+    }
+
+    if (selectedEntry) {
+      await updateMeal(babyId, selectedEntry.id, data)
+    } else {
+      await addMeal(babyId, data)
+    }
+
     await loadMeals()
     setShowForm(false)
     setSaving(false)
-    setQuantity(''); setNotes('')
+    setQuantity(''); setNotes(''); setSelectedEntry(null)
     setTimestamp(getNowLocal(timezone))
+  }
+
+  function handleEdit(m: any) {
+    setSelectedEntry(m)
+    setMealType(m.mealType)
+    setFoodType(m.foodType)
+    setQuantity(m.quantity.toString())
+    setUnit(m.unit)
+    setNotes(m.notes || '')
+    const d = m.timestamp?.toDate ? m.timestamp.toDate() : new Date(m.timestamp)
+    const year = d.toLocaleString('en-US', { timeZone: timezone, year: 'numeric' })
+    const month = d.toLocaleString('en-US', { timeZone: timezone, month: '2-digit' })
+    const day = d.toLocaleString('en-US', { timeZone: timezone, day: '2-digit' })
+    const hour = d.toLocaleString('en-US', { timeZone: timezone, hour: '2-digit', hour12: false })
+    const min = d.toLocaleString('en-US', { timeZone: timezone, minute: '2-digit' })
+    setTimestamp(`${year}-${month}-${day}T${hour === '24' ? '00' : hour}:${min}`)
+    setShowForm(true)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm(t('baby.parentProfile.areYouSure'))) return
+    await deleteMeal(babyId, id)
+    await loadMeals()
   }
 
   const latest = meals[0]
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title={t('baby.meals.logTitle')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
+      <Topbar title={selectedEntry ? t('common.edit') : t('baby.meals.logTitle')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
           <div className="mb-4"><label className="input-label">{t('baby.meals.timestamp')}</label>
@@ -91,12 +122,12 @@ export default function MealsPage() {
 
   return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar
-        title={t('baby.meals.title')}
-        backLabel={t('common.back')}
-        backHref={`/baby/${babyId}`}
-        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }}
-      />
+        <Topbar
+          title={t('baby.meals.title')}
+          backLabel={t('common.back')}
+          backHref={`/baby/${babyId}`}
+          action={{ label: '+ ' + t('tabs.add'), onClick: () => { setSelectedEntry(null); setShowForm(true); } }}
+        />
       <div className="scroll-body">
         {latest ? (
           <div className="hi-card mb-3" style={{ background: 'var(--rose-bg)' }}>
@@ -119,23 +150,15 @@ export default function MealsPage() {
           <>
             <div className="sec-title mt-4">{t('baby.meals.allEntries')}</div>
             {meals.map((m: any) => (
-              <div key={m.id} className="entry-card">
+              <EntryCard key={m.id} onEdit={() => handleEdit(m)} onDelete={() => handleDelete(m.id)}>
                 <EntryTime ts={m.timestamp} />
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                      {t(`baby.meals.${m.mealType}`)} · {t(`baby.meals.${m.foodType}`)}
-                    </div>
-                    <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>
-                      {m.quantity} {m.unit}{m.notes ? ` · ${m.notes}` : ''}
-                    </div>
-                  </div>
-                  <button onClick={async () => { await deleteMeal(babyId, m.id); loadMeals() }}
-                    className="text-[11px] px-2 py-1 rounded" style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
-                    {t('baby.meals.delete')}
-                  </button>
+                <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                  {t(`baby.meals.${m.mealType}`)} · {t(`baby.meals.${m.foodType}`)}
                 </div>
-              </div>
+                <div className="text-[12px] mt-[2px]" style={{ color: 'var(--text3)' }}>
+                  {m.quantity} {m.unit}{m.notes ? ` · ${m.notes}` : ''}
+                </div>
+              </EntryCard>
             ))}
           </>
         )}

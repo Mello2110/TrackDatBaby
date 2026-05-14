@@ -6,7 +6,7 @@ import { getUserBabies, redeemInviteCode } from '@/lib/db'
 import { Topbar, TabBar, Pill } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import type { BabyProfile } from '@/types'
-import { formatDistanceToNow } from 'date-fns'
+import { formatAge } from '@/lib/units'
 
 export default function DashboardPage() {
   const { user, userData, refreshUserData } = useAuth()
@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   const profile = userData?.profile
+  const settings = userData?.settings
   const firstName = profile?.name?.split(' ')[0] || 'there'
 
   const hour = new Date().getHours()
@@ -49,17 +50,7 @@ export default function DashboardPage() {
   }
 
   function getAgeLabel(dob: string) {
-    const birth = new Date(dob)
-    const now = new Date()
-    const diffMs = now.getTime() - birth.getTime()
-    const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
-    const weeks = Math.ceil((diffDays + 0.1) / 7) // Always at least 1 week if born
-    const months = (now.getFullYear() - birth.getFullYear()) * 12 + now.getMonth() - birth.getMonth()
-
-    if (months < 12) {
-      return `${weeks || 1} ${t('baby.dashboard.wk')}`
-    }
-    return months < 24 ? `${months} ${t('baby.dashboard.mo')}` : `${Math.floor(months / 12)} ${t('baby.dashboard.yr')}`
+    return formatAge(dob, settings?.ageUnit, t)
   }
 
   return (

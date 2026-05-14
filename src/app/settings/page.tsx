@@ -43,6 +43,8 @@ export default function SettingsPage() {
   const [push, setPush] = useState(settings.notifications?.push ?? false)
   const [language, setLanguage] = useState(settings.language || 'en')
   const [timezone, setTimezone] = useState(settings.timezone || 'Europe/Berlin')
+  const [weightUnit, setWeightUnit] = useState(settings.weightUnit || 'kg')
+  const [ageUnit, setAgeUnit] = useState(settings.ageUnit || 'weeks')
 
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -120,6 +122,8 @@ export default function SettingsPage() {
     try {
       await updateUserSettings(user.uid, {
         theme, rememberMe, language, timezone,
+        weightUnit: weightUnit as any,
+        ageUnit: ageUnit as any,
         notifications: { feeding: push, medication: push, push },
       })
       await refreshUserData()
@@ -213,6 +217,25 @@ export default function SettingsPage() {
             <option value="Europe/London">Europe/London</option>
             <option value="America/New_York">America/New_York</option>
             <option value="Asia/Tokyo">Asia/Tokyo</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="input-label">{t('settings.weightUnit')}</label>
+          <select className="input-field" value={weightUnit} onChange={(e) => setWeightUnit(e.target.value)}>
+            <option value="kg">{t('baby.dashboard.kg')}</option>
+            <option value="g">{t('baby.dashboard.g')}</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="input-label">{t('settings.ageUnit')}</label>
+          <select className="input-field" value={ageUnit} onChange={(e) => setAgeUnit(e.target.value)}>
+            <option value="default">{t('common.unknown')} (Default)</option>
+            <option value="days">{t('baby.dashboard.days')}</option>
+            <option value="weeks">{t('baby.dashboard.weeks')}</option>
+            <option value="months">{t('baby.dashboard.months')}</option>
+            <option value="years">{t('baby.dashboard.years')}</option>
           </select>
         </div>
 

@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getStats, addStat } from '@/lib/db'
-import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
-import { Topbar, EntryTime, EmptyState } from '@/components/ui'
+import { getStats, addStat, updateStat, deleteStat } from '@/lib/db'
+import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
+import { Topbar, EntryTime, EmptyState, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
+import { formatWeight, convertToKg } from '@/lib/units'
 import type { StatType, StatUnit } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 
@@ -21,9 +22,11 @@ export default function StatsPage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user, userData } = useAuth()
   const { t } = useLanguage()
-  const timezone = userData?.settings?.timezone || 'Europe/Berlin'
+  const settings = userData?.settings
+  const timezone = settings?.timezone || 'Europe/Berlin'
   const [stats, setStats] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<any>(null)
   const [saving, setSaving] = useState(false)
   const [statType, setStatType] = useState<StatType>('weight')
   const [value, setValue] = useState('')
@@ -44,24 +47,73 @@ export default function StatsPage() {
     if (!user) return
     setSaving(true)
     const selectedUnit = STAT_TYPES.find(s => s.value === statType)?.unit || 'kg'
-    await addStat(babyId, {
+    const finalUnit = (statType === 'weight' && settings?.weightUnit) ? settings.weightUnit : selectedUnit
+    
+    // If entering weight in grams but we store in kg, or vice-versa
+    const numericValue = parseFloat(value)
+    const storedValue = (statType === 'weight' && finalUnit === 'g') ? numericValue / 1000 : numericValue
+    const storedUnit = (statType === 'weight') ? 'kg' : selectedUnit
+
+    const data = {
       babyId, loggedBy: user.uid,
       timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
-      statType, value: parseFloat(value), unit: selectedUnit, notes,
-    })
+      statType, value: storedValue, unit: storedUnit as StatUnit, notes,
+    }
+
+    if (selectedEntry) {
+      await updateStat(babyId, selectedEntry.id, data)
+    } else {
+      await addStat(babyId, data)
+    }
+
     await loadStats()
-    setShowForm(false); setSaving(false); setValue(''); setNotes('')
+    setShowForm(false); setSaving(false); setValue(''); setNotes(''); setSelectedEntry(null)
     setTimestamp(getNowLocal(timezone))
+  }
+
+  function handleEdit(s: any) {
+    setSelectedEntry(s)
+    setStatType(s.statType)
+    
+    let displayValue = s.value
+    if (s.statType === 'weight' && settings?.weightUnit === 'g') {
+      displayValue = Math.round(s.value * 1000)
+    }
+    
+    setValue(displayValue.toString())
+    setNotes(s.notes || '')
+    const d = s.timestamp?.toDate ? s.timestamp.toDate() : new Date(s.timestamp)
+    // Need a local string for the datetime-local input
+    const localStr = formatInTimezone(d, timezone).replace(', ', 'T').split('.').join('-')
+    // Wait, the formatInTimezone is de-DE. I need a proper ISO-like format for the input.
+    // I'll use a simple manual format.
+    const year = d.toLocaleString('en-US', { timeZone: timezone, year: 'numeric' })
+    const month = d.toLocaleString('en-US', { timeZone: timezone, month: '2-digit' })
+    const day = d.toLocaleString('en-US', { timeZone: timezone, day: '2-digit' })
+    const hour = d.toLocaleString('en-US', { timeZone: timezone, hour: '2-digit', hour12: false })
+    const min = d.toLocaleString('en-US', { timeZone: timezone, minute: '2-digit' })
+    setTimestamp(`${year}-${month}-${day}T${hour === '24' ? '00' : hour}:${min}`)
+    
+    setShowForm(true)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm(t('baby.parentProfile.areYouSure'))) return
+    await deleteStat(babyId, id)
+    await loadStats()
   }
 
   if (showForm) return (
     <div className="page-bg flex flex-col min-h-screen">
-      <Topbar title={t('baby.stats.logTitle')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
+      <Topbar title={selectedEntry ? t('common.edit') : t('baby.stats.logTitle')} backLabel={t('common.cancel')} action={{ label: t('common.save'), onClick: () => {} }} />
       <div className="scroll-body">
         <form onSubmit={handleSave}>
           <div className="mb-4"><label className="input-label">{t('baby.stats.measurement')}</label>
             <select className="input-field" value={statType} onChange={(e) => setStatType(e.target.value as StatType)}>
-              {STAT_TYPES.map(s => <option key={s.value} value={s.value}>{s.label} ({s.unit})</option>)}
+              {STAT_TYPES.map(s => {
+                const displayUnit = (s.value === 'weight' && settings?.weightUnit) ? settings.weightUnit : s.unit
+                return <option key={s.value} value={s.value}>{s.label} ({displayUnit})</option>
+              })}
             </select></div>
           <div className="mb-4"><label className="input-label">{t('baby.stats.value')}</label>
             <input className="input-field" type="number" step="0.1" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.0" required /></div>
@@ -78,7 +130,7 @@ export default function StatsPage() {
   return (
     <div className="page-bg flex flex-col min-h-screen">
       <Topbar title={t('baby.dashboard.stats')} backLabel={t('common.back')} backHref={`/baby/${babyId}`}
-        action={{ label: '+ ' + t('tabs.add'), onClick: () => setShowForm(true) }} />
+        action={{ label: '+ ' + t('tabs.add'), onClick: () => { setSelectedEntry(null); setShowForm(true); } }} />
       <div className="scroll-body">
         {/* Summary grid */}
         <div className="grid grid-cols-2 gap-[10px] mb-5">
@@ -89,9 +141,11 @@ export default function StatsPage() {
                 style={{ background: `var(${st.bg})`, border: '2px solid var(--border2)' }}>
                 <div className="text-[10px] font-semibold mb-1" style={{ color: 'var(--text3)' }}>{st.label}</div>
                 <div className="text-[20px] font-bold" style={{ color: 'var(--text)' }}>
-                  {latest ? latest.value : '—'}
+                  {latest ? (st.value === 'weight' ? formatWeight(latest.value, settings?.weightUnit, t).split(' ')[0] : latest.value) : '—'}
                 </div>
-                <div className="text-[10px] font-semibold" style={{ color: 'var(--text3)' }}>{st.unit}</div>
+                <div className="text-[10px] font-semibold" style={{ color: 'var(--text3)' }}>
+                  {(st.value === 'weight' && settings?.weightUnit) ? settings.weightUnit : st.unit}
+                </div>
               </div>
             )
           })}
@@ -103,13 +157,13 @@ export default function StatsPage() {
           <>
             <div className="sec-title">{t('baby.stats.history')}</div>
             {stats.map((s: any) => (
-              <div key={s.id} className="entry-card">
+              <EntryCard key={s.id} onEdit={() => handleEdit(s)} onDelete={() => handleDelete(s.id)}>
                 <EntryTime ts={s.timestamp} />
                 <div className="text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                  {STAT_TYPES.find(t => t.value === s.statType)?.label} — {s.value} {s.unit}
+                  {STAT_TYPES.find(t => t.value === s.statType)?.label} — {s.statType === 'weight' ? formatWeight(s.value, settings?.weightUnit, t) : `${s.value} ${s.unit}`}
                 </div>
                 {s.notes && <div className="text-[12px] mt-1" style={{ color: 'var(--text3)' }}>{s.notes}</div>}
-              </div>
+              </EntryCard>
             ))}
           </>
         )}
