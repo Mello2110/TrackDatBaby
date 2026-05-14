@@ -93,9 +93,6 @@ export const en = {
     alarms: 'Alarms',
     manageAlarms: 'Set times for meals & medication',
     noAlarms: 'No alarms set',
-    language: 'Language',
-    weightUnit: 'Weight Unit',
-    ageUnit: 'Age Unit',
   },
   settings: {
     title: 'Settings',
