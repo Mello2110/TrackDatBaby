@@ -203,7 +203,7 @@ export default function SettingsPage() {
 
         <div className="mb-4">
           <label className="input-label">{t('settings.language')}</label>
-          <select className="input-field" value={language} onChange={(e) => setLanguage(e.target.value)}>
+          <select className="input-field" value={language} onChange={(e) => setLanguage(e.target.value as any)}>
             <option value="en">English</option>
             <option value="de">Deutsch</option>
           </select>
@@ -222,7 +222,7 @@ export default function SettingsPage() {
 
         <div className="mb-4">
           <label className="input-label">{t('settings.weightUnit')}</label>
-          <select className="input-field" value={weightUnit} onChange={(e) => setWeightUnit(e.target.value)}>
+          <select className="input-field" value={weightUnit} onChange={(e) => setWeightUnit(e.target.value as 'kg' | 'g')}>
             <option value="kg">{t('baby.dashboard.kg')}</option>
             <option value="g">{t('baby.dashboard.g')}</option>
           </select>
@@ -230,7 +230,7 @@ export default function SettingsPage() {
 
         <div className="mb-4">
           <label className="input-label">{t('settings.ageUnit')}</label>
-          <select className="input-field" value={ageUnit} onChange={(e) => setAgeUnit(e.target.value)}>
+          <select className="input-field" value={ageUnit} onChange={(e) => setAgeUnit(e.target.value as any)}>
             <option value="default">{t('common.unknown')} (Default)</option>
             <option value="days">{t('baby.dashboard.days')}</option>
             <option value="weeks">{t('baby.dashboard.weeks')}</option>
