@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getBaby, getMeals } from '@/lib/db'
+import { getBaby, getMeals, getStats } from '@/lib/db'
 import { Topbar, TabBar, EntryTime } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import { formatAge, formatWeight } from '@/lib/units'
@@ -90,9 +90,18 @@ export default function BabyPage() {
   useEffect(() => {
     getBaby(babyId).then(setBaby)
     getMeals(babyId).then((m) => setRecentMeals(m.slice(0, 3)))
-    import('@/lib/db').then(({ getLatestStat }) => {
-      getLatestStat(babyId, 'weight').then(setLatestWeight)
-      getLatestStat(babyId, 'height').then(setLatestHeight)
+    // Fetch all stats and find the latest per type client-side.
+    // This avoids needing a Firestore composite index (where + orderBy).
+    getStats(babyId).then((allStats) => {
+      const sorted = (allStats as any[]).sort((a, b) => {
+        const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime()
+        const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime()
+        return tb - ta
+      })
+      const latestW = sorted.find((s) => s.statType === 'weight') || null
+      const latestH = sorted.find((s) => s.statType === 'height') || null
+      setLatestWeight(latestW)
+      setLatestHeight(latestH)
     })
   }, [babyId])
 
