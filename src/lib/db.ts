@@ -8,7 +8,7 @@ import { encryptName, decryptName } from './utils'
 import type {
   UserProfile, UserSettings, BabyProfile, Caregiver,
   MealEntry, IllnessEntry, DevelopmentEntry, BehaviorEntry,
-  StatEntry, InviteCode, CaregiverRole, AccessLevel,
+  StatEntry, DiaperEntry, InviteCode, CaregiverRole, AccessLevel,
 } from '@/types'
 
 // ── USER ──────────────────────────────────────────────────
@@ -312,6 +312,15 @@ export const deleteStat = (babyId: string, id: string) =>
   deleteEntry(babyId, 'stats', id)
 export const updateStat = (babyId: string, id: string, data: Partial<StatEntry>) =>
   updateEntry(babyId, 'stats', id, data)
+
+// ── DIAPERS ───────────────────────────────────────────────
+export const addDiaper = (babyId: string, data: Omit<DiaperEntry, 'id' | 'createdAt'>) =>
+  addEntry(babyId, 'diapers', data)
+export const getDiapers = (babyId: string) => getEntries(babyId, 'diapers')
+export const deleteDiaper = (babyId: string, id: string) =>
+  deleteEntry(babyId, 'diapers', id)
+export const updateDiaper = (babyId: string, id: string, data: Partial<DiaperEntry>) =>
+  updateEntry(babyId, 'diapers', id, data)
 
 // Get latest stat by type
 export async function getLatestStat(babyId: string, statType: string) {

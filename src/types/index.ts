@@ -181,6 +181,19 @@ export interface StatEntry {
   createdAt: Date
 }
 
+// ── DIAPERS ───────────────────────────────────────────────
+export type DiaperType = 'wet' | 'dirty' | 'both' | 'dry'
+
+export interface DiaperEntry {
+  id: string
+  babyId: string
+  loggedBy: string
+  timestamp: Date
+  type: DiaperType
+  notes?: string
+  createdAt?: Date
+}
+
 // ── FIRESTORE PATHS ───────────────────────────────────────
 export const COLLECTIONS = {
   USERS: 'users',
@@ -194,4 +207,5 @@ export const SUBCOLLECTIONS = {
   DEVELOPMENT: 'development',
   BEHAVIOR: 'behavior',
   STATS: 'stats',
+  DIAPERS: 'diapers',
 } as const
