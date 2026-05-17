@@ -65,6 +65,14 @@ function saveOrder(userId: string, babyId: string, order: string[]) {
   localStorage.setItem(`catOrder-${userId}-${babyId}`, JSON.stringify(order))
 }
 
+/** Parses a weight/height string that may use German comma notation (e.g. "3,65") or include a unit suffix. */
+function parseLocaleFloat(s: string): number {
+  if (!s) return NaN
+  // Remove everything except digits, commas, and dots; then replace comma with dot
+  const normalized = s.replace(/[^0-9,.]/g, '').replace(',', '.')
+  return parseFloat(normalized)
+}
+
 export default function BabyPage() {
   const { babyId } = useParams<{ babyId: string }>()
   const { user, userData } = useAuth()
@@ -133,7 +141,7 @@ export default function BabyPage() {
               value: latestWeight
                 ? formatWeight(latestWeight.value, settings?.weightUnit, t)
                 : baby.birthWeight
-                  ? formatWeight(parseFloat(baby.birthWeight), settings?.weightUnit, t)
+                  ? formatWeight(parseLocaleFloat(baby.birthWeight), settings?.weightUnit, t)
                   : '—',
               bg: '--mint-bg',
             },
@@ -142,7 +150,7 @@ export default function BabyPage() {
               value: latestHeight
                 ? `${latestHeight.value} cm`
                 : baby.birthHeight
-                  ? `${parseFloat(baby.birthHeight)} cm`
+                  ? `${parseLocaleFloat(baby.birthHeight)} cm`
                   : '—',
               bg: '--blue-bg',
             },
@@ -177,7 +185,17 @@ export default function BabyPage() {
                 border: '1.5px solid var(--accent)',
               }}
             >
-              {reorderMode ? '✓ Fertig' : '↕ Anordnen'}
+              {reorderMode ? (
+                <span className="flex items-center gap-1">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Fertig
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8 9 12 5 16 9"/><polyline points="8 15 12 19 16 15"/></svg>
+                  Anordnen
+                </span>
+              )}
             </button>
           </div>
         </div>
