@@ -52,15 +52,21 @@ export default function DevelopmentPage() {
       notes: notes || undefined,
     }
 
-    if (selectedEntry) {
-      await updateDevelopment(babyId, selectedEntry.id, data)
-    } else {
-      await addDevelopment(babyId, data)
+    try {
+      if (selectedEntry) {
+        await updateDevelopment(babyId, selectedEntry.id, data)
+      } else {
+        await addDevelopment(babyId, data)
+      }
+      await load()
+      setShowForm(false); setSelectedEntry(null)
+      setTimestamp(getNowLocal(timezone)); setDescription(''); setAgeInMonths(''); setNotes('')
+    } catch (err) {
+      console.error("Failed to save development log:", err)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
     }
-
-    await load()
-    setShowForm(false); setSaving(false); setSelectedEntry(null)
-    setTimestamp(getNowLocal(timezone)); setDescription(''); setAgeInMonths(''); setNotes('')
   }
 
   function handleEdit(e: any) {

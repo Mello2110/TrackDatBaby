@@ -66,21 +66,50 @@ export default function DiapersPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!user) return
+
     setSaving(true)
+    const utcDate = parseLocalToUTC(timestamp, timezone)
     const data = {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
+      timestamp: Timestamp.fromDate(utcDate) as any,
       type: diaperType,
       notes: notes || undefined,
     }
-    if (selectedEntry) {
-      await updateDiaper(babyId, selectedEntry.id, data)
-    } else {
-      await addDiaper(babyId, data)
+
+    // Keep backup of previous entries for rollback on error
+    const previousEntries = [...entries]
+
+    if (!selectedEntry) {
+      // Optimistic Update: instantly add the new entry to the list
+      const optimisticEntry = {
+        id: `temp-${Date.now()}`,
+        ...data,
+        isOptimistic: true
+      }
+      setEntries((prev) => [optimisticEntry, ...prev])
+      setShowForm(false)
+      setNotes('')
+      setTimestamp(getNowLocal(timezone))
     }
-    await load()
-    setShowForm(false); setSaving(false); setNotes(''); setSelectedEntry(null)
-    setTimestamp(getNowLocal(timezone))
+
+    try {
+      if (selectedEntry) {
+        // For edits, we close form and save
+        setShowForm(false)
+        await updateDiaper(babyId, selectedEntry.id, data)
+      } else {
+        await addDiaper(babyId, data)
+      }
+      await load()
+    } catch (err) {
+      console.error("Failed to save diaper log:", err)
+      // Rollback to previous state on error
+      setEntries(previousEntries)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
+      setSelectedEntry(null)
+    }
   }
 
   function handleEdit(entry: any) {

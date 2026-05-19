@@ -244,9 +244,13 @@ export async function redeemInviteCode(
 
 // ── GENERIC ENTRY HELPERS ─────────────────────────────────
 async function addEntry(babyId: string, sub: string, data: object) {
+  // Sanitize undefined fields to prevent Firestore SDK crash
+  const sanitized = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined)
+  )
   const ref = await addDoc(
     collection(db, 'babies', babyId, sub),
-    { ...data, createdAt: serverTimestamp() }
+    { ...sanitized, createdAt: serverTimestamp() }
   )
   return ref.id
 }
@@ -261,7 +265,11 @@ async function getEntries(babyId: string, sub: string) {
 }
 
 async function updateEntry(babyId: string, sub: string, entryId: string, data: object) {
-  await updateDoc(doc(db, 'babies', babyId, sub, entryId), data)
+  // Sanitize undefined fields to prevent Firestore SDK crash
+  const sanitized = Object.fromEntries(
+    Object.entries(data).filter(([_, v]) => v !== undefined)
+  )
+  await updateDoc(doc(db, 'babies', babyId, sub, entryId), sanitized)
 }
 
 async function deleteEntry(babyId: string, sub: string, entryId: string) {

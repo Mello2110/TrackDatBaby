@@ -71,15 +71,21 @@ export default function IllnessPage() {
       status, notes: notes || undefined,
     }
 
-    if (selectedEntry) {
-      await updateIllness(babyId, selectedEntry.id, data)
-    } else {
-      await addIllness(babyId, data)
+    try {
+      if (selectedEntry) {
+        await updateIllness(babyId, selectedEntry.id, data)
+      } else {
+        await addIllness(babyId, data)
+      }
+      await load()
+      setShowForm(false); setSelectedEntry(null)
+      setTimestamp(getNowLocal(timezone)); setTemperature(''); setMedication(''); setNotes(''); setSeverity(5)
+    } catch (err) {
+      console.error("Failed to save illness log:", err)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
     }
-
-    await load()
-    setShowForm(false); setSaving(false); setSelectedEntry(null)
-    setTimestamp(getNowLocal(timezone)); setTemperature(''); setMedication(''); setNotes(''); setSeverity(5)
   }
 
   function handleEdit(e: any) {

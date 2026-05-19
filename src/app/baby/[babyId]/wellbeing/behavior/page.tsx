@@ -80,16 +80,22 @@ export default function BehaviorPage() {
       notes: notes || undefined,
     }
 
-    if (selectedEntry) {
-      await updateBehavior(babyId, selectedEntry.id, data)
-    } else {
-      await addBehavior(babyId, data)
+    try {
+      if (selectedEntry) {
+        await updateBehavior(babyId, selectedEntry.id, data)
+      } else {
+        await addBehavior(babyId, data)
+      }
+      await load()
+      setShowForm(false); setSelectedEntry(null)
+      setTimestamp(getNowLocal(timezone)); setDescription(''); setEnergyScale(5); setSocialScale(5)
+      setTrigger(''); setDuration(''); setResponse(''); setNotes('')
+    } catch (err) {
+      console.error("Failed to save behavior log:", err)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
     }
-
-    await load()
-    setShowForm(false); setSaving(false); setSelectedEntry(null)
-    setTimestamp(getNowLocal(timezone)); setDescription(''); setEnergyScale(5); setSocialScale(5)
-    setTrigger(''); setDuration(''); setResponse(''); setNotes('')
   }
 
   function handleEdit(e: any) {

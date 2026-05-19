@@ -48,17 +48,22 @@ export default function MealsPage() {
       unit, notes,
     }
 
-    if (selectedEntry) {
-      await updateMeal(babyId, selectedEntry.id, data)
-    } else {
-      await addMeal(babyId, data)
+    try {
+      if (selectedEntry) {
+        await updateMeal(babyId, selectedEntry.id, data)
+      } else {
+        await addMeal(babyId, data)
+      }
+      await loadMeals()
+      setShowForm(false)
+      setQuantity(''); setNotes(''); setSelectedEntry(null)
+      setTimestamp(getNowLocal(timezone))
+    } catch (err) {
+      console.error("Failed to save meal log:", err)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
     }
-
-    await loadMeals()
-    setShowForm(false)
-    setSaving(false)
-    setQuantity(''); setNotes(''); setSelectedEntry(null)
-    setTimestamp(getNowLocal(timezone))
   }
 
   function handleEdit(m: any) {
