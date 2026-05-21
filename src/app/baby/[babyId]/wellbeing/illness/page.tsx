@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getIllnesses, addIllness, deleteIllness, updateIllness } from '@/lib/db'
+import { addIllness, deleteIllness, updateIllness, subscribeToIllnesses } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, Pill, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -52,11 +52,10 @@ export default function IllnessPage() {
   const [status, setStatus] = useState<IllnessStatus>('ongoing')
   const [notes, setNotes] = useState('')
 
-  useEffect(() => { load() }, [babyId])
-
-  async function load() {
-    setEntries(await getIllnesses(babyId))
-  }
+  useEffect(() => {
+    const unsubscribe = subscribeToIllnesses(babyId, setEntries)
+    return unsubscribe
+  }, [babyId])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -71,17 +70,17 @@ export default function IllnessPage() {
       status, notes: notes || undefined,
     }
 
+    setShowForm(false); setSelectedEntry(null)
+    setTimestamp(getNowLocal(timezone)); setTemperature(''); setMedication(''); setNotes(''); setSeverity(5)
+
     try {
       if (selectedEntry) {
         await updateIllness(babyId, selectedEntry.id, data)
       } else {
         await addIllness(babyId, data)
       }
-      await load()
-      setShowForm(false); setSelectedEntry(null)
-      setTimestamp(getNowLocal(timezone)); setTemperature(''); setMedication(''); setNotes(''); setSeverity(5)
     } catch (err) {
-      console.error("Failed to save illness log:", err)
+      console.error('Failed to save illness log:', err)
       alert(t('common.error') || 'An error occurred while saving.')
     } finally {
       setSaving(false)
@@ -109,7 +108,6 @@ export default function IllnessPage() {
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
     await deleteIllness(babyId, id)
-    await load()
   }
 
   const latest = entries[0]

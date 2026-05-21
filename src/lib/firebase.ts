@@ -1,13 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getFirestore, initializeFirestore, persistentLocalCache } from 'firebase/firestore'
 import { getMessaging, isSupported } from 'firebase/messaging'
 
-// ─────────────────────────────────────────────────────────
-// 🔧 REPLACE THESE WITH YOUR FIREBASE PROJECT CREDENTIALS
-// Get them from: https://console.firebase.google.com
-// Project Settings → Your apps → SDK setup and configuration
-// ─────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
@@ -18,13 +13,19 @@ const firebaseConfig = {
 }
 
 // Prevent re-initialization in Next.js hot reload
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
+const isNewApp = !getApps().length
+const app = isNewApp ? initializeApp(firebaseConfig) : getApp()
+
+// Enable offline persistence on first init; fall back to standard Firestore on HMR re-runs
+// persistentLocalCache uses IndexedDB so writes are committed locally first,
+// then synced to the server — eliminating all client-side write latency.
+export const db = isNewApp
+  ? initializeFirestore(app, { localCache: persistentLocalCache() })
+  : getFirestore(app)
 
 export const auth = getAuth(app)
-export const db = getFirestore(app)
 export const messaging = async () => (await isSupported()) ? getMessaging(app) : null
 
-// Auth providers
 export const googleProvider = new GoogleAuthProvider()
 
 export default app

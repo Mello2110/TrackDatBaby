@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getStats, addStat, updateStat, deleteStat } from '@/lib/db'
+import { addStat, updateStat, deleteStat, subscribeToStats } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -35,8 +35,10 @@ export default function StatsPage() {
 
   const STAT_TYPES = getStatTypes(t)
 
-  useEffect(() => { loadStats() }, [babyId])
-  async function loadStats() { setStats(await getStats(babyId)) }
+  useEffect(() => {
+    const unsubscribe = subscribeToStats(babyId, setStats)
+    return unsubscribe
+  }, [babyId])
 
   function getLatest(type: StatType) {
     return stats.find((s) => s.statType === type)
@@ -60,15 +62,22 @@ export default function StatsPage() {
       statType, value: storedValue, unit: storedUnit as StatUnit, notes,
     }
 
-    if (selectedEntry) {
-      await updateStat(babyId, selectedEntry.id, data)
-    } else {
-      await addStat(babyId, data)
-    }
-
-    await loadStats()
-    setShowForm(false); setSaving(false); setValue(''); setNotes(''); setSelectedEntry(null)
+    setShowForm(false)
+    setValue(''); setNotes(''); setSelectedEntry(null)
     setTimestamp(getNowLocal(timezone))
+
+    try {
+      if (selectedEntry) {
+        await updateStat(babyId, selectedEntry.id, data)
+      } else {
+        await addStat(babyId, data)
+      }
+    } catch (err) {
+      console.error('Failed to save stat log:', err)
+      alert(t('common.error') || 'An error occurred while saving.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleEdit(s: any) {
@@ -100,7 +109,6 @@ export default function StatsPage() {
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
     await deleteStat(babyId, id)
-    await loadStats()
   }
 
   if (showForm) return (

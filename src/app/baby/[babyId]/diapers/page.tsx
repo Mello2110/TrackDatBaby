@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getDiapers, addDiaper, deleteDiaper, updateDiaper } from '@/lib/db'
+import { addDiaper, deleteDiaper, updateDiaper, subscribeToDiapers } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -57,54 +57,37 @@ export default function DiapersPage() {
   const [timestamp, setTimestamp] = useState(getNowLocal(timezone))
   const [notes, setNotes] = useState('')
 
-  useEffect(() => { load() }, [babyId])
-
-  async function load() {
-    setEntries(await getDiapers(babyId))
-  }
+  // Real-time subscription — onSnapshot fires from local IndexedDB cache first
+  // (< 5ms), then again when the server confirms. No manual reload needed.
+  useEffect(() => {
+    const unsubscribe = subscribeToDiapers(babyId, setEntries)
+    return unsubscribe // cleanup: stop listener when component unmounts
+  }, [babyId])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!user) return
-
     setSaving(true)
-    const utcDate = parseLocalToUTC(timestamp, timezone)
     const data = {
       babyId, loggedBy: user.uid,
-      timestamp: Timestamp.fromDate(utcDate) as any,
+      timestamp: Timestamp.fromDate(parseLocalToUTC(timestamp, timezone)) as any,
       type: diaperType,
       notes: notes || undefined,
     }
-
-    // Keep backup of previous entries for rollback on error
-    const previousEntries = [...entries]
-
-    if (!selectedEntry) {
-      // Optimistic Update: instantly add the new entry to the list
-      const optimisticEntry = {
-        id: `temp-${Date.now()}`,
-        ...data,
-        isOptimistic: true
-      }
-      setEntries((prev) => [optimisticEntry, ...prev])
-      setShowForm(false)
-      setNotes('')
-      setTimestamp(getNowLocal(timezone))
-    }
+    // Close the form immediately — the onSnapshot listener will update
+    // entries automatically once the write hits the local Firestore cache.
+    setShowForm(false)
+    setNotes('')
+    setTimestamp(getNowLocal(timezone))
 
     try {
       if (selectedEntry) {
-        // For edits, we close form and save
-        setShowForm(false)
         await updateDiaper(babyId, selectedEntry.id, data)
       } else {
         await addDiaper(babyId, data)
       }
-      await load()
     } catch (err) {
-      console.error("Failed to save diaper log:", err)
-      // Rollback to previous state on error
-      setEntries(previousEntries)
+      console.error('Failed to save diaper log:', err)
       alert(t('common.error') || 'An error occurred while saving.')
     } finally {
       setSaving(false)
@@ -128,8 +111,12 @@ export default function DiapersPage() {
 
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
-    await deleteDiaper(babyId, id)
-    await load()
+    try {
+      await deleteDiaper(babyId, id)
+    } catch (err) {
+      console.error('Failed to delete diaper log:', err)
+      alert(t('common.error') || 'An error occurred while deleting.')
+    }
   }
 
   const todayCount = entries.filter((e) => {
@@ -219,7 +206,6 @@ export default function DiapersPage() {
               </span>
             </div>
           </div>
-          {/* Type breakdown */}
           <div className="flex flex-col gap-[6px] items-end">
             {DIAPER_TYPES.map((dt) => {
               const count = entries.filter((e) => {

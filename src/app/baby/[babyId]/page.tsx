@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getBaby, getMeals, getStats } from '@/lib/db'
+import { getBaby, subscribeToMeals, subscribeToStats } from '@/lib/db'
 import { Topbar, TabBar, EntryTime } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
 import { formatAge, formatWeight } from '@/lib/units'
@@ -89,20 +89,29 @@ export default function BabyPage() {
 
   useEffect(() => {
     getBaby(babyId).then(setBaby)
-    getMeals(babyId).then((m) => setRecentMeals(m.slice(0, 3)))
-    // Fetch all stats and find the latest per type client-side.
-    // This avoids needing a Firestore composite index (where + orderBy).
-    getStats(babyId).then((allStats) => {
+  }, [babyId])
+
+  useEffect(() => {
+    // Real-time meals: only keep the 3 most recent for the dashboard preview
+    const unsubscribeMeals = subscribeToMeals(babyId, (meals) => {
+      setRecentMeals(meals.slice(0, 3))
+    })
+    return unsubscribeMeals
+  }, [babyId])
+
+  useEffect(() => {
+    // Real-time stats: sort client-side to find latest weight and height.
+    // Avoids needing a Firestore composite index (where + orderBy).
+    const unsubscribeStats = subscribeToStats(babyId, (allStats) => {
       const sorted = (allStats as any[]).sort((a, b) => {
         const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime()
         const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime()
         return tb - ta
       })
-      const latestW = sorted.find((s) => s.statType === 'weight') || null
-      const latestH = sorted.find((s) => s.statType === 'height') || null
-      setLatestWeight(latestW)
-      setLatestHeight(latestH)
+      setLatestWeight(sorted.find((s) => s.statType === 'weight') || null)
+      setLatestHeight(sorted.find((s) => s.statType === 'height') || null)
     })
+    return unsubscribeStats
   }, [babyId])
 
   // Load persisted order once user and baby are known

@@ -1,7 +1,7 @@
 import {
   doc, collection, getDoc, getDocs, setDoc, updateDoc,
   addDoc, deleteDoc, query, orderBy, where, Timestamp,
-  arrayUnion, arrayRemove, serverTimestamp,
+  arrayUnion, arrayRemove, serverTimestamp, onSnapshot,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { encryptName, decryptName } from './utils'
@@ -263,6 +263,40 @@ async function getEntries(babyId: string, sub: string) {
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
+
+/**
+ * Real-time subscription to a subcollection, ordered by timestamp descending.
+ * Returns an unsubscribe function — call it in useEffect cleanup to avoid memory leaks.
+ * With Firestore offline persistence enabled, the callback fires immediately from the
+ * local IndexedDB cache (< 5ms), then again when the server confirms the write.
+ */
+function subscribeToEntries(
+  babyId: string,
+  sub: string,
+  callback: (entries: any[]) => void,
+  onError?: (err: Error) => void
+): () => void {
+  const q = query(
+    collection(db, 'babies', babyId, sub),
+    orderBy('timestamp', 'desc')
+  )
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (err) => {
+      console.error(`[subscribeToEntries] ${sub}:`, err)
+      onError?.(err)
+    }
+  )
+}
+
+// ── PUBLIC SUBSCRIPTION EXPORTS ───────────────────────────
+export const subscribeToDiapers    = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'diapers', cb)
+export const subscribeToMeals      = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'meals', cb)
+export const subscribeToStats      = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'stats', cb)
+export const subscribeToIllnesses  = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'illness', cb)
+export const subscribeToBehaviors  = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'behavior', cb)
+export const subscribeToDevelopments = (b: string, cb: (e: any[]) => void) => subscribeToEntries(b, 'development', cb)
 
 async function updateEntry(babyId: string, sub: string, entryId: string, data: object) {
   // Sanitize undefined fields to prevent Firestore SDK crash

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getMeals, addMeal, deleteMeal, updateMeal } from '@/lib/db'
+import { addMeal, deleteMeal, updateMeal, subscribeToMeals } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -29,12 +29,10 @@ export default function MealsPage() {
   const [unit, setUnit] = useState<QuantityUnit>('g')
   const [notes, setNotes] = useState('')
 
-  useEffect(() => { loadMeals() }, [babyId])
-
-  async function loadMeals() {
-    const data = await getMeals(babyId)
-    setMeals(data)
-  }
+  useEffect(() => {
+    const unsubscribe = subscribeToMeals(babyId, setMeals)
+    return unsubscribe
+  }, [babyId])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -47,6 +45,9 @@ export default function MealsPage() {
       quantity: parseFloat(quantity),
       unit, notes,
     }
+    setShowForm(false)
+    setQuantity(''); setNotes(''); setSelectedEntry(null)
+    setTimestamp(getNowLocal(timezone))
 
     try {
       if (selectedEntry) {
@@ -54,12 +55,8 @@ export default function MealsPage() {
       } else {
         await addMeal(babyId, data)
       }
-      await loadMeals()
-      setShowForm(false)
-      setQuantity(''); setNotes(''); setSelectedEntry(null)
-      setTimestamp(getNowLocal(timezone))
     } catch (err) {
-      console.error("Failed to save meal log:", err)
+      console.error('Failed to save meal log:', err)
       alert(t('common.error') || 'An error occurred while saving.')
     } finally {
       setSaving(false)
@@ -86,7 +83,6 @@ export default function MealsPage() {
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
     await deleteMeal(babyId, id)
-    await loadMeals()
   }
 
   const latest = meals[0]

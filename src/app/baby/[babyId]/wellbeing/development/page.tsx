@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getDevelopments, addDevelopment, deleteDevelopment, updateDevelopment } from '@/lib/db'
+import { addDevelopment, deleteDevelopment, updateDevelopment, subscribeToDevelopments } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, Pill, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -33,11 +33,10 @@ export default function DevelopmentPage() {
   const [comparisonStatus, setComparisonStatus] = useState<ComparisonStatus>('on_time')
   const [notes, setNotes] = useState('')
 
-  useEffect(() => { load() }, [babyId])
-
-  async function load() {
-    setEntries(await getDevelopments(babyId))
-  }
+  useEffect(() => {
+    const unsubscribe = subscribeToDevelopments(babyId, setEntries)
+    return unsubscribe
+  }, [babyId])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -52,17 +51,17 @@ export default function DevelopmentPage() {
       notes: notes || undefined,
     }
 
+    setShowForm(false); setSelectedEntry(null)
+    setTimestamp(getNowLocal(timezone)); setDescription(''); setAgeInMonths(''); setNotes('')
+
     try {
       if (selectedEntry) {
         await updateDevelopment(babyId, selectedEntry.id, data)
       } else {
         await addDevelopment(babyId, data)
       }
-      await load()
-      setShowForm(false); setSelectedEntry(null)
-      setTimestamp(getNowLocal(timezone)); setDescription(''); setAgeInMonths(''); setNotes('')
     } catch (err) {
-      console.error("Failed to save development log:", err)
+      console.error('Failed to save development log:', err)
       alert(t('common.error') || 'An error occurred while saving.')
     } finally {
       setSaving(false)
@@ -89,7 +88,6 @@ export default function DevelopmentPage() {
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
     await deleteDevelopment(babyId, id)
-    await load()
   }
 
   const latest = entries[0]

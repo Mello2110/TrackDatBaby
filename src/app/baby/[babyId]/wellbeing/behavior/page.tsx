@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
-import { getBehaviors, addBehavior, deleteBehavior, updateBehavior } from '@/lib/db'
+import { addBehavior, deleteBehavior, updateBehavior, subscribeToBehaviors } from '@/lib/db'
 import { getNowLocal, parseLocalToUTC, formatInTimezone } from '@/lib/utils'
 import { Topbar, EntryTime, EmptyState, Pill, EntryCard } from '@/components/ui'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -60,11 +60,10 @@ export default function BehaviorPage() {
   const [response, setResponse] = useState('')
   const [notes, setNotes] = useState('')
 
-  useEffect(() => { load() }, [babyId])
-
-  async function load() {
-    setEntries(await getBehaviors(babyId))
-  }
+  useEffect(() => {
+    const unsubscribe = subscribeToBehaviors(babyId, setEntries)
+    return unsubscribe
+  }, [babyId])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -80,18 +79,18 @@ export default function BehaviorPage() {
       notes: notes || undefined,
     }
 
+    setShowForm(false); setSelectedEntry(null)
+    setTimestamp(getNowLocal(timezone)); setDescription(''); setEnergyScale(5); setSocialScale(5)
+    setTrigger(''); setDuration(''); setResponse(''); setNotes('')
+
     try {
       if (selectedEntry) {
         await updateBehavior(babyId, selectedEntry.id, data)
       } else {
         await addBehavior(babyId, data)
       }
-      await load()
-      setShowForm(false); setSelectedEntry(null)
-      setTimestamp(getNowLocal(timezone)); setDescription(''); setEnergyScale(5); setSocialScale(5)
-      setTrigger(''); setDuration(''); setResponse(''); setNotes('')
     } catch (err) {
-      console.error("Failed to save behavior log:", err)
+      console.error('Failed to save behavior log:', err)
       alert(t('common.error') || 'An error occurred while saving.')
     } finally {
       setSaving(false)
@@ -124,7 +123,6 @@ export default function BehaviorPage() {
   async function handleDelete(id: string) {
     if (!confirm(t('baby.parentProfile.areYouSure'))) return
     await deleteBehavior(babyId, id)
-    await load()
   }
 
   const latest = entries[0]
